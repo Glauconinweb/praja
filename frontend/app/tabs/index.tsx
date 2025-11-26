@@ -85,9 +85,7 @@ export default function Dashboard() {
     try {
       // MUDANÇA 2: Chamamos a rota de vitrine
       // ⚠️ Confirme se o IP é este mesmo
-      const response = await fetch(
-        "http://192.168.4.30:5001/api/produtos/vitrine"
-      );
+      const response = await fetch("http://:5001/api/produtos/vitrine");
       const data = await response.json();
       setProdutos(data);
     } catch (error) {
