@@ -87,6 +87,7 @@ Componentes reutilizáveis e design responsivo.
 Uso de Expo para facilitar o desenvolvimento e testes no celular.
 
 🏗️ Estrutura do Projeto
+
 PRAJA/
 │
 ├── backend/               # API Node.js + Express + Prisma
@@ -99,7 +100,7 @@ PRAJA/
 │   ├── prisma/
 │   └── package.json
 │
-├── mobile/                # Aplicativo React Native
+├── frontend/                # Aplicativo React Native
 │   ├── src/
 │   │   ├── screens/       # Telas principais do app
 │   │   ├── components/    # Botões, inputs e componentes visuais

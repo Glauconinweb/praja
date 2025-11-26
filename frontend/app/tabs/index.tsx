@@ -1,0 +1,403 @@
+import React, { useState, useCallback, useEffect } from "react";
+import {
+  Text,
+  TextInput,
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+  Image,
+  ScrollView,
+  Platform,
+  ActivityIndicator,
+} from "react-native";
+import { Link, useRouter, useFocusEffect } from "expo-router";
+import { Feather } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+type UsuarioData = {
+  token: string;
+  tipo: string;
+  email: string;
+};
+
+// Categorias estáticas
+// Categorias com IMAGENS REAIS que funcionam
+const categorias = [
+  {
+    id: "1",
+    nome: "Doces",
+    imagem:
+      "https://images.unsplash.com/photo-1551024709-8f23befc6f87?q=80&w=150&auto=format&fit=crop",
+  },
+  {
+    id: "2",
+    nome: "Bolos",
+    imagem:
+      "https://images.unsplash.com/photo-1565958011703-44f9829ba187?q=80&w=150&auto=format&fit=crop",
+  },
+  {
+    id: "3",
+    nome: "Salgados", // Mudei de "Pastéis" para Salgados para a foto combinar mais
+    imagem:
+      "https://images.unsplash.com/photo-1563379926898-05f4575a45d8?q=80&w=150&auto=format&fit=crop",
+  },
+  {
+    id: "4",
+    nome: "Lanches",
+    imagem:
+      "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=150&auto=format&fit=crop",
+  },
+  {
+    id: "5",
+    nome: "Bebidas",
+    imagem:
+      "https://images.unsplash.com/photo-1544145945-f90425340c7e?q=80&w=150&auto=format&fit=crop",
+  },
+  {
+    id: "6",
+    nome: "Mercado",
+    imagem:
+      "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=150&auto=format&fit=crop",
+  },
+];
+
+export default function Dashboard() {
+  const router = useRouter();
+  const [usuario, setUsuario] = useState<UsuarioData | null>(null);
+
+  // MUDANÇA 1: Agora guardamos PRODUTOS, não lojas
+  const [produtos, setProdutos] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useFocusEffect(
+    useCallback(() => {
+      verificarLogin();
+    }, [])
+  );
+
+  // Busca produtos ao abrir
+  useEffect(() => {
+    buscarVitrine();
+  }, []);
+
+  async function buscarVitrine() {
+    try {
+      // MUDANÇA 2: Chamamos a rota de vitrine
+      // ⚠️ Confirme se o IP é este mesmo
+      const response = await fetch(
+        "http://192.168.4.30:5001/api/produtos/vitrine"
+      );
+      const data = await response.json();
+      setProdutos(data);
+    } catch (error) {
+      console.log("Erro ao buscar produtos:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function verificarLogin() {
+    try {
+      const userJson = await AsyncStorage.getItem("user");
+      if (userJson) setUsuario(JSON.parse(userJson));
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
+  async function fazerLogout() {
+    await AsyncStorage.clear();
+    setUsuario(null);
+  }
+
+  // Função auxiliar para formatar preço
+  const formatarPreco = (valor: number) => {
+    return valor.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+  };
+
+  return (
+    <View style={styles.container}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 50 }}
+      >
+        <View style={styles.webWrapper}>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.grandeTitulo}>Prajá </Text>
+            <View style={styles.headerRight}>
+              {usuario ? (
+                <View style={styles.usuarioLogado}>
+                  <View>
+                    <Text style={styles.saudacao}>
+                      Olá, {usuario.email?.split("@")[0]}
+                    </Text>
+                    <Text style={styles.tipoUsuario}>{usuario.tipo}</Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={fazerLogout}
+                    style={styles.logoutBtn}
+                  >
+                    <Feather name="log-out" size={20} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <Link href="/Login" asChild>
+                  <TouchableOpacity style={styles.loginBtn}>
+                    <Text style={styles.linkTexto}>Entrar</Text>
+                    <Feather name="user" size={24} color="#f6f8faff" />
+                  </TouchableOpacity>
+                </Link>
+              )}
+            </View>
+          </View>
+
+          <Text style={styles.subtituloHeader}>
+            O que você quer comer hoje?
+          </Text>
+
+          {/* Busca */}
+          <View style={styles.inputContainer}>
+            <Feather
+              style={styles.icon}
+              name="search"
+              size={20}
+              color="#f6f8faff"
+            />
+            <TextInput
+              placeholder="Buscar comida, mercado..."
+              placeholderTextColor="#eee"
+              style={styles.input}
+            />
+          </View>
+
+          {/* Categorias */}
+          <Text style={styles.tituloSecao}>Categorias</Text>
+          <View style={styles.categoriesWrapper}>
+            <FlatList
+              data={categorias}
+              horizontal
+              showsHorizontalScrollIndicator={Platform.OS === "web"}
+              contentContainerStyle={{ paddingHorizontal: 20 }}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <TouchableOpacity style={styles.card}>
+                  <Image source={{ uri: item.imagem }} style={styles.img} />
+                  <Text style={styles.nomeCategoria}>{item.nome}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+
+          {/* --- LISTA DE PRODUTOS (ESTILO IFOOD) --- */}
+          <Text style={styles.tituloSecao}>Destaques da Região</Text>
+
+          <View style={styles.listaProdutos}>
+            {loading ? (
+              <ActivityIndicator color="#fff" size="large" />
+            ) : produtos.length === 0 ? (
+              <Text style={{ color: "#fff", marginLeft: 20 }}>
+                Nenhum produto disponível no momento.
+              </Text>
+            ) : (
+              produtos.map((item: any) => (
+                <TouchableOpacity key={item.id} style={styles.produtoCard}>
+                  {/* Imagem do Produto */}
+                  <Image
+                    source={{
+                      uri: item.imagem || "https://via.placeholder.com/150",
+                    }}
+                    style={styles.produtoImg}
+                  />
+
+                  {/* Informações */}
+                  <View style={styles.produtoInfo}>
+                    <Text style={styles.produtoNome} numberOfLines={1}>
+                      {item.nome}
+                    </Text>
+
+                    {/* Nome da Loja (Vendedor) */}
+                    <View style={styles.lojaTag}>
+                      <Feather name="shopping-bag" size={12} color="#666" />
+                      <Text style={styles.lojaNome}>
+                        {item.vendedor?.nome || "Loja Parceira"}
+                      </Text>
+                    </View>
+
+                    <Text style={styles.produtoDesc} numberOfLines={2}>
+                      {item.descricao || "Sem descrição."}
+                    </Text>
+
+                    <Text style={styles.produtoPreco}>
+                      R$ {item.preco?.toFixed(2).replace(".", ",")}
+                    </Text>
+                  </View>
+
+                  {/* Botãozinho de Mais (Opcional) */}
+                  <View style={styles.btnAdd}>
+                    <Feather name="plus" size={18} color="#ee3f0aff" />
+                  </View>
+                </TouchableOpacity>
+              ))
+            )}
+          </View>
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#ee3f0aff",
+    paddingTop: Platform.OS === "web" ? 20 : 50,
+  },
+  webWrapper: { width: "100%", maxWidth: 800, alignSelf: "center" },
+
+  // Header & Busca (Iguais ao anterior)
+  header: {
+    paddingHorizontal: 20,
+    marginBottom: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  headerRight: { flexDirection: "row", alignItems: "center" },
+  usuarioLogado: { flexDirection: "row", alignItems: "center", gap: 15 },
+  saudacao: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "bold",
+    textAlign: "right",
+  },
+  tipoUsuario: {
+    color: "rgba(255,255,255,0.7)",
+    fontSize: 10,
+    textAlign: "right",
+    textTransform: "capitalize",
+  },
+  logoutBtn: {
+    backgroundColor: "rgba(0,0,0,0.2)",
+    padding: 8,
+    borderRadius: 20,
+  },
+  loginBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    paddingVertical: 8,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+  },
+  linkTexto: { color: "#faf8f6ff", fontWeight: "bold", fontSize: 14 },
+  grandeTitulo: { fontSize: 28, fontWeight: "800", color: "#fff" },
+  subtituloHeader: {
+    fontSize: 16,
+    color: "#eee",
+    marginLeft: 20,
+    marginBottom: 20,
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.1)",
+    marginHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#fff",
+    height: 50,
+    paddingHorizontal: 15,
+    marginBottom: 30,
+  },
+  icon: { marginRight: 10 },
+  input: { flex: 1, color: "#fff", fontSize: 16 },
+
+  // Categorias
+  tituloSecao: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#fff",
+    marginLeft: 20,
+    marginBottom: 15,
+  },
+  categoriesWrapper: { marginBottom: 30 },
+  card: { alignItems: "center", marginRight: 15 },
+  img: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 2,
+    borderColor: "#fff",
+    marginBottom: 8,
+    backgroundColor: "#ccc",
+  },
+  nomeCategoria: { color: "#fff", fontSize: 12, fontWeight: "600" },
+
+  // --- ESTILOS NOVOS: CARD DE PRODUTO ---
+  listaProdutos: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  produtoCard: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 15,
+    flexDirection: "row", // Deixa a imagem na esquerda e texto na direita
+    elevation: 3, // Sombra Android
+    shadowColor: "#000", // Sombra iOS
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    alignItems: "center",
+  },
+  produtoImg: {
+    width: 90,
+    height: 90,
+    borderRadius: 8,
+    backgroundColor: "#eee",
+    marginRight: 15,
+  },
+  produtoInfo: {
+    flex: 1,
+    justifyContent: "center",
+  },
+  produtoNome: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 4,
+  },
+  lojaTag: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  lojaNome: {
+    fontSize: 12,
+    color: "#666",
+    marginLeft: 4,
+  },
+  produtoDesc: {
+    fontSize: 12,
+    color: "#999",
+    marginBottom: 8,
+    lineHeight: 16,
+  },
+  produtoPreco: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#ee3f0aff", // Azul ou Verde (Preço em destaque)
+  },
+  btnAdd: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: "rgba(238, 63, 10, 0.1)", // Laranja bem clarinho
+    marginLeft: 5,
+  },
+});

@@ -1,49 +1,57 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import path from "path";
-import { fileURLToPath } from "url";
 import { PrismaClient } from "@prisma/client";
 
-
+// Importação das rotas
 import loginRoutes from "./routes/loginRoutes.js";
+import produtoRoutes from "./routes/produtoRoutes.js";
 import registerRoutes from "./routes/registerRoutes.js";
-import { resetPassword, updatePassword } from "./controllers/resetPasswordController.js";
+import lojaRoutes from "./routes/lojaRoutes.js";
+import {
+  resetPassword,
+  updatePassword,
+} from "./controllers/resetPasswordController.js";
+
 dotenv.config();
 
 const app = express();
 const prisma = new PrismaClient();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Configurações básicas
+app.use(cors()); // Libera o acesso para o app
+app.use(express.json()); // Permite ler JSON no corpo da requisição
 
-
-app.use(cors()); 
-app.use(express.json()); 
-app.use(express.static(path.join(__dirname, "../frontend")));
+// --- ROTAS DA API ---
 app.use("/api/login", loginRoutes);
 app.use("/api/register", registerRoutes);
 app.post("/api/reset-password", resetPassword);
 app.post("/api/update-password", updatePassword);
+app.use("/api/produtos", produtoRoutes);
+app.use("/api/lojas", lojaRoutes);
+
+// --- ROTA DE TESTE (RAIZ) ---
+// Isso serve para você saber se o servidor está vivo acessando pelo navegador
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../frontend/index.html"));
+  res.send("API do Prajá está funcionando! 🚀");
 });
 
-/**
- * @function connectDB
- * @description 
- */
+// Conexão com o Banco de Dados
 async function connectDB() {
   try {
     await prisma.$connect();
     console.log("Conectado ao MongoDB Atlas com Prisma!");
   } catch (error) {
     console.error("Erro ao conectar ao banco:", error);
-    process.exit(1); 
+    process.exit(1);
   }
 }
 connectDB();
+
+// Inicialização do Servidor
 const PORT = process.env.PORT || 5001;
-app.listen(PORT, () =>
-  console.log(`Servidor rodando em http://localhost:${PORT}/`)
+app.listen(PORT, "0.0.0.0", () =>
+  console.log(
+    `Servidor rodando e aceitando conexões em http://0.0.0.0:${PORT}/`
+  )
 );
