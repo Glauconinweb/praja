@@ -8,6 +8,7 @@ import loginRoutes from "./routes/loginRoutes.js";
 import produtoRoutes from "./routes/produtoRoutes.js";
 import registerRoutes from "./routes/registerRoutes.js";
 import lojaRoutes from "./routes/lojaRoutes.js";
+import { buscarProdutos } from "./controllers/busca inteligente/busca.js";
 import {
   resetPassword,
   updatePassword,
@@ -29,6 +30,7 @@ app.post("/api/reset-password", resetPassword);
 app.post("/api/update-password", updatePassword);
 app.use("/api/produtos", produtoRoutes);
 app.use("/api/lojas", lojaRoutes);
+app.get("/api/busca", buscarProdutos);
 
 // --- ROTA DE TESTE (RAIZ) ---
 // Isso serve para você saber se o servidor está vivo acessando pelo navegador

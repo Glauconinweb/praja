@@ -1,106 +1,104 @@
-# Documentação Técnica: Gerenciador de Estoque em JavaScript
+Documentação Técnica: Gerenciador de Estoque Atualizado
 
-**Autor:** CLEODOM GOMES DA SILVA FILHO
-**Começo da inscrição:** 21 de Novembro de 2025
+Autor: Cleodom Gomes Da Silva Filho
+Data da Atualização: 20 de Janeiro de 2026
+Módulos Envolvidos: GerenciadorEstoque.js (Controller), produtoController.js (Controller), produtoRoutes.js (Rotas)
 
-## 1. Visão Geral e Tecnologias Utilizadas
+1. Visão Geral
 
-O código implementa um **Gerenciador de Estoque** básico em JavaScript, projetado para ser executado em um ambiente de navegador (frontend). A principal característica desta versão final é a adesão estrita à manipulação pura do DOM (Document Object Model), eliminando o uso de *template strings* HTML (`innerHTML`) para renderização.
+O módulo GerenciadorEstoque.js foi refatorado para atuar como uma camada de serviço centralizada para todas as operações de estoque. Sua principal função é garantir a integridade dos dados de estoque, atualizando a quantidade e o status de disponibilidade (emEstoque) de um produto no banco de dados de forma atômica.
 
-O código é dividido em duas seções principais: a **Lógica do Gerenciador de Estoque** (o *core* do sistema) e as **Funções de Interface** (a camada de interação com o usuário).
+2. Controller: Gerenciador de Estoque (GerenciadorEstoque.js)
 
-### 1.1. Tecnologias e Padrões de Código
+O arquivo GerenciadorEstoque.js (localizado em backend/controllers/controleestoque/) agora utiliza o Prisma para interagir diretamente com a coleção Produto.
 
-| Categoria | Item Utilizado | Descrição e Vantagem |
-| :--- | :--- | :--- |
-| **Linguagem** | JavaScript (ES6+) | Utiliza recursos modernos como *arrow functions*, *optional chaining* (`?.`), e desestruturação para máxima concisão. |
-| **Estrutura de Dados** | `Map` e `Set` | O objeto `gerenciador.produtos` usa `Map` para armazenar produtos por uma chave normalizada, garantindo acesso rápido. `gerenciador.itensPausados` usa `Set` para rastreamento eficiente de produtos esgotados. |
-| **Padrão de Código** | Módulo de Objeto | A lógica de negócios é encapsulada no objeto `gerenciador`, promovendo organização e evitando poluição do escopo global. |
-| **Manipulação do DOM** | DOM Puro (`createElement`) | Uso exclusivo de `document.createElement`, `appendChild`, `textContent` e `classList` para construir a interface, garantindo segurança contra XSS e atendendo à restrição de não usar HTML em strings. |
-| **Concisão** | Funções Auxiliares | Uso de funções auxiliares curtas (`$`, `$Q`, `criarEl`) para reduzir a repetição de código e aumentar a legibilidade das operações de interface. |
+2.1. Métodos Principais
 
-## 2. Estrutura e Lógica do Gerenciador de Estoque
+Método
+Descrição
+Parâmetros
+Retorno
+atualizarEstoque
+Atualiza a quantidade de um produto e define o status emEstoque (true se quantidade > 0, false caso contrário).
+produtoId, novaQuantidade
+{ sucesso: Boolean, produto: Object, mensagem: String }
+processarVenda
+Verifica a disponibilidade e reduz o estoque do produto.
+produtoId, quantidadeVendida
+{ sucesso: Boolean, mensagem: String }
+verificarDisponibilidade
+Consulta o status de estoque de um produto.
+produtoId
+Boolean
 
-A lógica de negócios reside no objeto `gerenciador`. Ele gerencia o estado do estoque e as regras de negócio.
 
-### 2.1. Propriedades de Estado
 
-| Propriedade | Tipo | Descrição |
-| :--- | :--- | :--- |
-| `produtos` | `Map` | Armazena os produtos. A chave é o nome normalizado do produto (minúsculo, sem espaços extras) e o valor é o objeto do produto (`{nome, quantidade, emEstoque}`). |
-| `itensPausados` | `Set` | Armazena as chaves dos produtos que foram automaticamente pausados por estarem com estoque zero. |
-| `notificacoesVendedor` | `Array` | Lista de strings contendo mensagens de alerta e eventos para o vendedor. |
 
-### 2.2. Métodos do Gerenciador
+3. Integração no produtoController.js
 
-| Método | Descrição |
-| :--- | :--- |
-| `_normalizarNome(nome)` | Método privado. Converte o nome do produto para minúsculas e remove espaços em branco, criando uma chave única para o `Map`. |
-| `_adicionarNotificacao(mensagem)` | Método privado. Adiciona uma mensagem com *timestamp* à lista de notificações e chama `atualizarInterface()` para refletir a mudança no DOM. |
-| `_atualizarStatusDisponibilidade(chave)` | Método privado. Verifica a quantidade do produto. Se for zero, marca o produto como `emEstoque: false` e o adiciona ao `itensPausados`, gerando um alerta. Se a quantidade for maior que zero e estava pausado, o despausa. |
-| `adicionarProduto(nome, quantidade)` | Adiciona um novo produto ou incrementa a quantidade de um produto existente. Valida a entrada e chama `_atualizarStatusDisponibilidade`. |
-| `removerProduto(nome)` | Remove um produto do `produtos` e do `itensPausados` (se estiver lá). |
-| `verificarDisponibilidade(nome)` | Retorna `true` se o produto existe, está marcado como `emEstoque` e tem `quantidade > 0`. |
-| `processarPedido(nome, quantidadePedida)` | Tenta processar um pedido. Verifica a disponibilidade e o estoque. Se houver sucesso, subtrai a quantidade e retorna um objeto de resultado. |
-| `consultarStatus(nome)` | Retorna um objeto com o status detalhado do produto (nome, quantidade, disponibilidade, se está pausado). |
-| `listarEstoqueCompleto()` | Retorna um `Array` com o status de **todos** os produtos. |
-| `listarDisponiveis()` | Retorna um `Array` com o status dos produtos disponíveis para venda. |
-| `listarPausados()` | Retorna um `Array` com o status dos produtos pausados. |
-| `obterNotificacoesVendedor()` | Retorna a lista de notificações. |
-| `limparNotificacoesVendedor()` | Limpa a lista de notificações e adiciona uma notificação de limpeza. |
+O GerenciadorEstoque foi integrado ao produtoController.js para garantir que as regras de negócio de estoque sejam aplicadas em pontos chave.
 
-## 3. Funções de Interface e Manipulação do DOM
+3.1. Criação de Produto
 
-Esta seção lida com a interação do usuário e a atualização visual da página. O código foi otimizado com funções auxiliares para manter a concisão, apesar da complexidade da manipulação pura do DOM.
+A criação de um novo produto agora garante que o campo emEstoque seja definido corretamente com base na quantidade inicial.
 
-### 3.1. Funções Auxiliares de Concisão
+3.2. Nova Função de Atualização
 
-| Função | Descrição |
-| :--- | :--- |
-| `$(id)` | Atalho para `document.getElementById(id)`. |
-| `$Q(sel)` | Atalho para `document.querySelectorAll(sel)`. |
-| `getVal(id)` | Obtém o valor (`.value`) de um elemento pelo ID. |
-| `getNum(id)` | Obtém o valor de um elemento e o converte para inteiro (`parseInt`). |
-| `obterValores(idNome, idQtd)` | Combina `getVal` e `getNum` para obter nome e quantidade de formulários. |
-| `criarEl(tag, classes, text, children)` | **Função central para DOM Puro.** Cria um elemento (`tag`), aplica classes, define `textContent` e anexa elementos filhos, tudo em uma única chamada. |
+A função atualizarEstoqueProduto foi adicionada ao produtoController.js para expor a funcionalidade de atualização de estoque via API.
 
-### 3.2. Funções de Interação
+JavaScript
 
-| Função | Descrição |
-| :--- | :--- |
-| `adicionarProduto()` | Obtém dados do formulário, valida e chama `gerenciador.adicionarProduto()`. Limpa os campos. |
-| `removerProduto()` | Obtém o nome, solicita confirmação e chama `gerenciador.removerProduto()`. |
-| `processarPedido()` | Obtém dados do formulário, chama `gerenciador.processarPedido()`, e atualiza a div de resultado do pedido (`resultadoPedido`) com a mensagem e classe de status. |
-| `limparNotificacoes()` | Chama `gerenciador.limparNotificacoesVendedor()`. |
-| `mudarAba(abaId)` | Função para alternar a visibilidade das abas da interface, removendo e adicionando a classe `active` nos elementos e botões correspondentes. |
 
-### 3.3. Funções de Renderização (DOM Puro)
+// produtoController.js
+export async function atualizarEstoqueProduto(req, res) {
+  const { id } = req.params;
+  const { quantidade } = req.body;
 
-| Função | Descrição |
-| :--- | :--- |
-| `renderizarLista(id, lista, elementFn, msgVazia)` | Função genérica que limpa o contêiner (`id`) e o preenche. Se a `lista` estiver vazia, anexa uma mensagem de vazio. Caso contrário, itera sobre a lista e anexa o elemento criado pela função `elementFn`. |
-| `criarNotificacaoElemento(notif)` | Cria o elemento `<p>` para uma notificação, aplicando classes de estilo (`alert`, `success`, `warning`) com base no conteúdo da string da notificação. |
-| `criarProdutoElemento(p, isPausado)` | Cria o elemento `<p>` que representa um item de produto para as listas de estoque, montando a estrutura interna com `<span>`s e `<strong>`s. |
-| `criarProdutoClienteElemento(p)` | Versão simplificada de `criarProdutoElemento` para a visualização do cliente, que exibe apenas nome e quantidade. |
-| `atualizarInterface()` | Função principal de renderização. Obtém todos os dados do `gerenciador` e usa `renderizarLista` para atualizar as seções de Notificações, Estoque Completo, Pausados e Disponíveis. Também atualiza os contadores de estatísticas. |
+  const resultado = await GerenciadorEstoque.atualizarEstoque(id, quantidade);
+  // ... (lógica de resposta)
+}
 
-## 4. Como o Código Funciona
 
-O fluxo de funcionamento do sistema é baseado em um ciclo de **Ação -> Lógica -> Atualização do DOM**:
+4. Rota de API para Estoque (produtoRoutes.js)
 
-1.  **Ação do Usuário:** O usuário interage com a interface (ex: clica em "Adicionar Produto").
-2.  **Função de Interface:** A função de interface correspondente (`adicionarProduto()`) é chamada. Ela obtém os dados do formulário e os valida.
-3.  **Lógica de Negócios:** A função de interface chama o método apropriado no objeto `gerenciador` (ex: `gerenciador.adicionarProduto()`).
-4.  **Atualização de Estado:** O método do `gerenciador` atualiza o estado interno (`produtos`, `itensPausados`). Se a ação for relevante (ex: adicionar, remover, esgotar), ele chama `_adicionarNotificacao()`.
-5.  **Notificação e Renderização:** O método `_adicionarNotificacao()` chama a função global `atualizarInterface()`.
-6.  **Atualização do DOM:** A função `atualizarInterface()` consulta o estado atualizado do `gerenciador` e usa as funções de criação de elementos (DOM Puro) para reconstruir as listas e estatísticas na página, refletindo o novo estado do sistema.
+Uma nova rota foi adicionada ao produtoRoutes.js para permitir que o frontend ou outros serviços atualizem o estoque de um produto.
 
-Este ciclo garante que qualquer mudança no estado do estoque seja imediatamente refletida na interface do usuário e nas notificações do vendedor.
+Método
+Rota
+Controller
+Descrição
+PATCH
+/api/produtos/estoque/:id
+atualizarEstoqueProduto
+Atualiza a quantidade de estoque de um produto específico. O corpo da requisição deve conter { "quantidade": 10 }.
 
-## 5. Conclusão sobre a Otimização
 
-A refatoração final resultou em um código que é:
 
-*   **Funcional:** Mantém todas as regras de negócio e interações originais.
-*   **Conciso:** Utiliza padrões modernos de JavaScript e funções auxiliares para reduzir o número de linhas de código onde a lógica de negócios reside.
-*   **Conforme a Restrição:** A manipulação do DOM é feita de forma pura, sem injeção de strings HTML, utilizando `document.createElement`, o que é uma prática recomendada para evitar vulnerabilidades de *Cross-Site Scripting* (XSS) ao lidar com conteúdo dinâmico.
+
+5. Exemplo de Uso (Frontend/Serviço)
+
+Para atualizar o estoque de um produto com ID 65b0d9e8f4d0c1e8f4d0c1e8 para 50 unidades:
+
+JavaScript
+
+
+// Exemplo de requisição PATCH
+const produtoId = "65b0d9e8f4d0c1e8f4d0c1e8";
+const novaQuantidade = 50;
+
+fetch(`http://localhost:5001/api/produtos/estoque/${produtoId}`, {
+  method: 'PATCH',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ quantidade: novaQuantidade } ),
+})
+.then(response => response.json())
+.then(data => console.log('Estoque atualizado:', data))
+.catch(error => console.error('Erro:', error));
+
+
+6. Referências
+
+[1] Prisma. [Updating records](https://www.prisma.io/docs/concepts/components/prisma-client/crud#update-records ).
+[2] Express. [Routing methods](https://expressjs.com/en/guide/routing.html ).

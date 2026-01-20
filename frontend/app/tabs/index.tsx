@@ -69,6 +69,8 @@ export default function Dashboard() {
   // MUDANÇA 1: Agora guardamos PRODUTOS, não lojas
   const [produtos, setProdutos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [busca, setBusca] = useState("");
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState("Todos");
 
   useFocusEffect(
     useCallback(() => {
@@ -81,11 +83,21 @@ export default function Dashboard() {
     buscarVitrine();
   }, []);
 
-  async function buscarVitrine() {
+  async function buscarVitrine(termo = "", cat = "Todos") {
     try {
-      // MUDANÇA 2: Chamamos a rota de vitrine
-      // ⚠️ Confirme se o IP é este mesmo
-      const response = await fetch("http://:5001/api/produtos/vitrine");
+      setLoading(true);
+      let url = "http://localhost:5001/api/busca";
+      const params = [];
+      if (termo) params.push(`q=${encodeURIComponent(termo)}`);
+      if (cat && cat !== "Todos") params.push(`categoria=${encodeURIComponent(cat)}`);
+      
+      if (params.length > 0) {
+        url += "?" + params.join("&");
+      } else {
+        url = "http://localhost:5001/api/produtos/vitrine";
+      }
+
+      const response = await fetch(url);
       const data = await response.json();
       setProdutos(data);
     } catch (error) {
@@ -94,6 +106,15 @@ export default function Dashboard() {
       setLoading(false);
     }
   }
+
+  // Efeito para busca com debounce
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      buscarVitrine(busca, categoriaSelecionada);
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [busca, categoriaSelecionada]);
 
   async function verificarLogin() {
     try {
@@ -170,6 +191,8 @@ export default function Dashboard() {
               placeholder="Buscar comida, mercado..."
               placeholderTextColor="#eee"
               style={styles.input}
+              value={busca}
+              onChangeText={setBusca}
             />
           </View>
 
@@ -183,9 +206,23 @@ export default function Dashboard() {
               contentContainerStyle={{ paddingHorizontal: 20 }}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
-                <TouchableOpacity style={styles.card}>
-                  <Image source={{ uri: item.imagem }} style={styles.img} />
-                  <Text style={styles.nomeCategoria}>{item.nome}</Text>
+                <TouchableOpacity 
+                  style={[
+                    styles.card, 
+                    categoriaSelecionada === item.nome && { opacity: 0.7 }
+                  ]}
+                  onPress={() => setCategoriaSelecionada(
+                    categoriaSelecionada === item.nome ? "Todos" : item.nome
+                  )}
+                >
+                  <Image source={{ uri: item.imagem }} style={[
+                    styles.img,
+                    categoriaSelecionada === item.nome && { borderColor: '#000' }
+                  ]} />
+                  <Text style={[
+                    styles.nomeCategoria,
+                    categoriaSelecionada === item.nome && { fontWeight: '800' }
+                  ]}>{item.nome}</Text>
                 </TouchableOpacity>
               )}
             />

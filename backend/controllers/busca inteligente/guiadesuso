@@ -1,0 +1,130 @@
+Documentação Técnica: Sistema de Busca Inteligente
+
+Autor: Cleodom Gomes Da silva Filho
+Data: 20 de Janeiro de 2026
+Módulos Envolvidos: busca.js (Backend), server.js (Rotas), tabs/index.tsx (Frontend)
+
+1. Visão Geral
+
+O Sistema de Busca Inteligente foi implementado para permitir que os usuários realizem pesquisas de produtos por termo de busca e filtro de categoria de forma eficiente. A lógica de busca foi movida para o backend, garantindo desempenho e consistência na filtragem de dados.
+
+2. Backend: Controller e Rota
+
+2.1. Controller (busca.js)
+
+O arquivo busca.js (localizado em backend/controllers/busca inteligente/) contém a lógica de consulta ao banco de dados utilizando o Prisma.
+
+Função buscarProdutos
+
+Esta função é responsável por realizar a busca principal, aplicando filtros de termo e categoria.
+
+Parâmetro (Query)
+Tipo
+Descrição
+Exemplo
+q
+String
+Termo de busca. Filtra por nome ou descricao do produto (case-insensitive).
+q=bolo
+categoria
+String
+Nome da categoria para filtrar.
+categoria=Doces
+
+
+
+
+Lógica de Filtro:
+
+•
+A busca por termo (q) utiliza a cláusula OR no Prisma para procurar o termo tanto no campo nome quanto no campo descricao do modelo Produto.
+
+•
+O modificador mode: 'insensitive' garante que a busca não diferencie maiúsculas de minúsculas.
+
+•
+A busca só retorna produtos que estejam emEstoque: true.
+
+Função listarCategorias
+
+Esta função retorna uma lista de todas as categorias únicas dos produtos atualmente em estoque.
+
+2.2. Rota (server.js)
+
+A nova rota de busca foi registrada no arquivo server.js para expor a funcionalidade de busca ao frontend.
+
+Método
+Rota
+Controller
+Descrição
+GET
+/api/busca
+buscarProdutos
+Realiza a busca de produtos com filtros opcionais.
+
+
+
+
+3. Frontend: Integração da Busca (tabs/index.tsx)
+
+A integração da busca foi realizada no componente Dashboard (localizado em frontend/app/tabs/index.tsx), substituindo a listagem estática por uma dinâmica e reativa.
+
+3.1. Estado e Debounce
+
+Dois novos estados foram adicionados para gerenciar a entrada do usuário e o filtro de categoria:
+
+JavaScript
+
+
+const [busca, setBusca] = useState("");
+const [categoriaSelecionada, setCategoriaSelecionada] = useState("Todos");
+
+
+Um useEffect com debounce de 500ms foi implementado para otimizar as requisições à API. A busca só é disparada 500 milissegundos após a última alteração nos estados busca ou categoriaSelecionada.
+
+JavaScript
+
+
+// Efeito para busca com debounce
+useEffect(() => {
+  const delayDebounceFn = setTimeout(() => {
+    buscarVitrine(busca, categoriaSelecionada);
+  }, 500);
+
+  return () => clearTimeout(delayDebounceFn);
+}, [busca, categoriaSelecionada]);
+
+
+3.2. Função buscarVitrine Atualizada
+
+A função buscarVitrine foi refatorada para construir a URL de requisição de forma dinâmica, utilizando a nova rota /api/busca com os parâmetros de query:
+
+JavaScript
+
+
+async function buscarVitrine(termo = "", cat = "Todos") {
+  // ... (lógica de setLoading)
+  let url = "http://localhost:5001/api/busca";
+  const params = [];
+  if (termo ) params.push(`q=${encodeURIComponent(termo)}`);
+  if (cat && cat !== "Todos") params.push(`categoria=${encodeURIComponent(cat)}`);
+  
+  if (params.length > 0) {
+    url += "?" + params.join("&");
+  } else {
+    // Caso não haja termo ou categoria, retorna para a vitrine padrão
+    url = "http://localhost:5001/api/produtos/vitrine";
+  }
+  // ... (lógica de fetch e setProdutos )
+}
+
+
+3.3. Filtro de Categoria
+
+Os cards de categoria agora são interativos. Ao clicar em um card, o estado categoriaSelecionada é atualizado, o que, por sua vez, dispara o useEffect com debounce, recarregando a lista de produtos filtrada.
+
+4. Referências
+
+[1] Prisma. [Querying with MongoDB](https://www.prisma.io/docs/concepts/database-connectors/mongodb ).
+[2] React. [Using the Effect Hook](https://react.dev/learn/synchronizing-with-effects ).
+[3] MDN Web Docs. [URLSearchParams](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams ).

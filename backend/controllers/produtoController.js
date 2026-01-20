@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import GerenciadorEstoque from "./controleestoque/GerenciadorEstoque.js";
 
 const prisma = new PrismaClient();
 
@@ -31,16 +32,17 @@ export async function criarProduto(req, res) {
     if (!vendedor)
       return res.status(404).json({ message: "Vendedor não encontrado." });
 
+    const qtdInicial = parseInt(quantidade);
     const produto = await prisma.produto.create({
       data: {
         nome,
         descricao,
-        preco: parseFloat(preco), // Garante que é número
-        quantidade: parseInt(quantidade), // Garante que é inteiro
+        preco: parseFloat(preco),
+        quantidade: qtdInicial,
         imagem,
         categoria,
         vendedorId,
-        emEstoque: parseInt(quantidade) > 0,
+        emEstoque: qtdInicial > 0,
       },
     });
 
@@ -77,5 +79,24 @@ export async function listarTodosProdutos(req, res) {
     return res.status(200).json(produtos);
   } catch (error) {
     return res.status(500).json({ message: "Erro ao buscar vitrine." });
+  }
+}
+
+// 4. ATUALIZAR ESTOQUE (Usando o Gerenciador de Estoque)
+export async function atualizarEstoqueProduto(req, res) {
+  const { id } = req.params;
+  const { quantidade } = req.body;
+
+  try {
+    const resultado = await GerenciadorEstoque.atualizarEstoque(id, quantidade);
+    
+    if (resultado.sucesso) {
+      return res.status(200).json(resultado);
+    } else {
+      return res.status(400).json(resultado);
+    }
+  } catch (error) {
+    console.error("Erro ao atualizar estoque:", error);
+    return res.status(500).json({ message: "Erro interno ao atualizar estoque." });
   }
 }
