@@ -8,28 +8,63 @@ datasource db {
 }
 
 model User {
-  id       String    @id @default(auto()) @map("_id") @db.ObjectId
-  nome     String
-  email    String    @unique
-  senha    String
-  tipo     String    // "cliente", "vendedor", "entregador"
-  produtos Produto[] // Relacionamento reverso
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  nome        String
+  email       String      @unique
+  senha       String
+  tipo        String      // "cliente", "vendedor", "entregador"
+  
+  // Campos específicos para lojas (vendedores)
+  descricao   String?     // Descrição da loja
+  telefone    String?     // Telefone de contato
+  endereco    String?     // Endereço da loja
+  foto        String?     // URL da foto/logo da loja
+  
+  produtos    Produto[]   // Relacionamento reverso
+  favoritos   Favorito[]
+  historico   Historico[]
+  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 }
 
 model Produto {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
   nome        String
-  descricao   String?  // Pode ser nulo (opcional)
-  preco       Float    // Use Float para dinheiro
+  descricao   String?     // Pode ser nulo (opcional)
+  preco       Float       // Use Float para dinheiro
   quantidade  Int
-  imagem      String?  // URL da imagem (texto)
+  imagem      String?     // URL da imagem (texto)
   categoria   String
-  emEstoque   Boolean  @default(true)
+  emEstoque   Boolean     @default(true)
   
   // Relacionamento com Vendedor (User)
-  vendedorId  String   @db.ObjectId
-  vendedor    User     @relation(fields: [vendedorId], references: [id])
+  vendedorId  String      @db.ObjectId
+  vendedor    User        @relation(fields: [vendedorId], references: [id])
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  favoritadoPor Favorito[]
+  vistoPor      Historico[]
+
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Favorito {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  produtoId String   @db.ObjectId
+  produto   Produto  @relation(fields: [produtoId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([userId, produtoId])
+}
+
+model Historico {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  produtoId String   @db.ObjectId
+  produto   Produto  @relation(fields: [produtoId], references: [id])
+  vistoEm   DateTime @default(now())
 }

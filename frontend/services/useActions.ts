@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'http://:5001/api/user'; // IP atualizado conforme sua mensagem
+const API_URL = 'http://10.136.147.8:5001/api/user'; // IP atualizado conforme sua mensagem
 
 export const userActionsService = {
   // Favoritos
