@@ -1,0 +1,277 @@
+🚀 Prajá — Aplicativo de Delivery Colaborativo
+
+Conectando pessoas, produtos e oportunidades.
+
+O Prajá é um aplicativo de delivery criado com o objetivo de resolver três dores principais:
+
+🛒 Compradores que não conseguem encontrar o que querem consumir.
+
+🚴 Pessoas com tempo livre que desejam uma renda extra realizando entregas.
+
+💼 Vendedores que têm dificuldade em alcançar clientes e vender seus produtos.
+
+Nosso propósito é unir conhecimento em tecnologia, design e ADS para desenvolver uma plataforma segura, escalável e socialmente útil.
+
+🧩 Funcionalidades do Sistema
+👤 Comprador
+
+Cadastro e login com verificação de email.
+
+Busca inteligente por produtos, categorias ou localização.
+
+Histórico e favoritos.
+
+Pagamento (futuro: integração com Pix ou Mercado Pago).
+
+Rastreamento de entregas em tempo real.
+
+Avaliação de vendedores e entregadores.
+
+🏪 Vendedor
+
+Cadastro de loja e produtos (nome, descrição, preço e imagem).
+
+Dashboard com estatísticas de vendas.
+
+Controle de estoque.
+
+Recebimento e gerenciamento de pedidos.
+
+Chat com clientes.
+
+Avaliação de clientes.
+
+🚴 Entregador
+
+Cadastro e validação de documentos.
+
+Recebimento de pedidos próximos.
+
+Aceitar ou recusar entregas.
+
+Geolocalização ativa.
+
+Histórico de entregas.
+
+👨‍💻 Administrador 
+
+Gerenciar usuários, denúncias e estatísticas.
+
+Monitorar transações e relatórios de desempenho.
+
+🔒 Segurança e Boas Práticas
+🧱 Backend
+
+Autenticação JWT e criptografia de senhas com bcrypt.
+
+Verificação de email (Nodemailer).
+
+Helmet e CORS configurados para proteger o servidor.
+
+Validação de dados com Zod/Joi.
+
+Rate limiting e logs com Winston/Morgan.
+
+📱 Frontend (React Native)
+
+Interface móvel (Android e iOS) criada com React Native.
+
+Tokens armazenados com segurança (AsyncStorage protegido).
+
+Navegação entre telas usando React Navigation.
+
+Comunicação com a API via Axios.
+
+Componentes reutilizáveis e design responsivo.
+
+Uso de Expo para facilitar o desenvolvimento e testes no celular.
+
+🏗️ Estrutura do Projeto
+
+PRAJA/
+│
+├── backend/               # API Node.js + Express + Prisma
+│   ├── src/
+│   │   ├── controllers/   # Lógica das rotas
+│   │   ├── routes/        # Endpoints do servidor
+│   │   ├── models/        # Schemas de banco de dados
+│   │   ├── middlewares/   # Autenticação, erros etc.
+│   │   └── utils/         # Funções auxiliares
+│   ├── prisma/
+│   └── package.json
+│
+├── frontend/                # Aplicativo React Native
+│   ├── src/
+│   │   ├── screens/       # Telas principais do app
+│   │   ├── components/    # Botões, inputs e componentes visuais
+│   │   ├── contexts/      # Contexto de autenticação e usuário
+│   │   ├── services/      # Comunicação com a API backend
+│   │   └── assets/        # Imagens, ícones e logotipos
+│   └── app.json
+│
+├── docs/                  # Documentação e sprints Scrum
+│   ├── SPRINT_1.md
+│   ├── SPRINT_2.md
+│   └── ARCHITECTURE.md
+│
+└── README.md
+
+⚙️ Como deixar funcional (Passo a Passo)
+1️⃣ Clonar o projeto
+git clone https://github.com/Glauconinweb/praja.git
+cd PRAJA
+
+2️⃣ Instalar dependências
+Backend:
+cd backend
+npm install
+
+Mobile (React Native):
+cd ../mobile
+npm install
+
+3️⃣ Configurar variáveis de ambiente
+
+Crie um arquivo .env dentro de backend/ com:
+
+DATABASE_URL="mysql://usuario:senha@localhost:3306/praja"
+JWT_SECRET="chave_super_segura"
+EMAIL_USER="seuemail@gmail.com"
+EMAIL_PASS="senha_de_aplicativo"
+FRONTEND_URL="http://localhost:8081"
+
+4️⃣ Rodar o servidor
+cd backend
+npm run dev
+
+5️⃣ Rodar o app mobile (Expo)
+cd ../mobile
+npx expo start
+
+
+📱 Escaneie o QR code com o app Expo Go no seu celular para abrir o aplicativo.
+
+🧭 Organização do Desenvolvimento (Scrum + Git)
+📋 Project Board (Kanban)
+
+Crie um GitHub Project chamado “🚀 Prajá — Scrum Board” com as colunas:
+
+Backlog — ideias e histórias de usuário
+
+To Do — tarefas prontas pra começar
+
+In Progress — em desenvolvimento
+
+Testing — em testes
+
+Done — concluídas
+
+🧾 Issues (Histórias de Usuário)
+
+Cada Issue representa uma funcionalidade:
+
+[USER STORY] Como comprador, quero buscar produtos por categoria
+para encontrar o que desejo rapidamente.
+
+
+Use labels para organizar:
+
+mobile
+
+backend
+
+bug
+
+enhancement
+
+security
+
+documentation
+
+🎯 Milestones (Sprints)
+
+Cada Sprint tem duração de 1 semana com metas claras:
+
+Sprint 1 — Sistema de login e autenticação
+
+Sprint 2 — Cadastro de produtos e vendedores
+
+Sprint 3 — Pedidos e entregas
+
+🌿 Branches
+
+Use o padrão:
+
+main
+develop
+feature/login-system
+feature/product-page
+bugfix/fix-auth-token
+
+
+Fluxo de trabalho:
+
+Crie uma branch (feature/...)
+
+Faça commits descritivos
+
+Abra um Pull Request
+
+Outro membro revisa o código
+
+Faça merge em develop
+
+Após testes, faça merge em main
+
+🧠 Papéis da Equipe (Scrum Roles)
+Função	Responsabilidade
+Product Owner (PO)	Define as prioridades e a visão (Glaucon)
+Scrum Master	Garante que o método Scrum seja seguido (Glaucon)
+Dev Team	Desenvolve backend e app mobile
+Designer/UX	Cuida da interface e experiência do usuário (Julio)
+
+📘 Dicas finais
+
+Documente cada sprint no diretório /docs.
+
+Faça commits claros e curtos (feat:, fix:, docs:).
+
+Realize reuniões semanais rápidas (daily/sprint review).
+
+Mantenha uma comunicação constante entre os membros.
+
+Teste o app frequentemente pelo Expo (em celulares reais).
+
+💡 Tecnologias Sugeridas
+
+Categoria	Ferramentas
+
+Mobile (Frontend)	React Native + Expo + React Navigation
+
+Backend	Node.js + Express + Prisma
+
+Banco de Dados	MySQL ou PostgreSQL
+
+Autenticação	Bcrypt + JWT
+
+Email	Nodemailer
+
+Hospedagem	Render (backend) + Expo Go (testes mobile)
+
+❤️ Contribuição
+
+Faça um fork do projeto.
+
+Crie uma branch: git checkout -b feature/nome-da-feature.
+
+Commit suas mudanças: git commit -m "feat: descrição da mudança".
+
+Envie sua branch: git push origin feature/nome-da-feature.
+
+Abra um Pull Request.
+
+
+📜 Licença
+
+Projeto colaborativo e com foco Empreendedor criado por estudantes do IFMA — Curso de ADS.
+Desenvolvido por Glaucon e equipe.
