@@ -25,7 +25,9 @@ export async function loginVendedor(req, res) {
     return res.status(200).json({ 
       message: "Login realizado com sucesso!", 
       token: token,
-      tipo: user.tipo 
+      tipo: user.tipo,
+      id: user.id,
+      nome: user.nome
     });
   } catch (error) {
     console.error("Erro no login do vendedor:", error);

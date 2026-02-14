@@ -54,20 +54,14 @@ export default function AdicionarProduto() {
     if (!nome || !preco || !quantidade)
       return Alert.alert("Erro", "Preencha os campos obrigatórios.");
 
-    // --- ÁREA DE AJUSTE RÁPIDO (BYPASS) ---
-    // Se o login não salvou o ID, cole um ID válido do seu MongoDB aqui entre as aspas para testar
-    const ID_FIXO_PARA_TESTE = "";
-
-    // Tenta pegar do usuário logado, se não tiver, usa o fixo
-    const vendedorIdFinal = usuario?.id || ID_FIXO_PARA_TESTE;
+    const vendedorIdFinal = usuario?.id;
 
     if (!vendedorIdFinal) {
       return Alert.alert(
-        "Erro Crítico",
-        "Não foi possível identificar o vendedor. Faça login novamente ou cole um ID no código."
+        "Erro",
+        "Não foi possível identificar o vendedor. Por favor, faça login novamente."
       );
     }
-    // --------------------------------------
 
     setLoading(true);
     try {

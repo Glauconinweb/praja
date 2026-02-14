@@ -47,9 +47,15 @@ export default function Login() {
 
       if (response.ok) {
         await AsyncStorage.setItem("token", data.token);
-        const userToSave = { tipo: data.tipo, token: data.token, email: email };
+        const userToSave = { 
+          id: data.id, 
+          nome: data.nome, 
+          tipo: data.tipo, 
+          token: data.token, 
+          email: email 
+        };
         await AsyncStorage.setItem("user", JSON.stringify(userToSave));
-        Alert.alert("Sucesso", `Bem-vindo, ${tipoUsuario}!`);
+        Alert.alert("Sucesso", `Bem-vindo, ${data.nome || tipoUsuario}!`);
         router.replace("./");
       } else {
         Alert.alert("Erro", data.message || "Falha ao entrar.");

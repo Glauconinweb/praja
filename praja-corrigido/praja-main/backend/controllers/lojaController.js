@@ -185,3 +185,23 @@ export async function atualizarLoja(req, res) {
     return res.status(500).json({ message: "Erro interno ao atualizar loja." });
   }
 }
+
+// 7. DELETAR PRODUTO
+export async function deletarProduto(req, res) {
+  try {
+    const { id } = req.params;
+
+    // Verifica se o produto existe
+    const produto = await prisma.produto.findUnique({ where: { id } });
+    if (!produto) {
+      return res.status(404).json({ message: "Produto não encontrado." });
+    }
+
+    await prisma.produto.delete({ where: { id } });
+
+    return res.status(200).json({ message: "Produto deletado com sucesso!" });
+  } catch (error) {
+    console.error("Erro ao deletar produto:", error);
+    return res.status(500).json({ message: "Erro interno ao deletar produto." });
+  }
+}

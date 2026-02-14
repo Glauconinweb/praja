@@ -14,10 +14,42 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const API_URL = "http://localhost:5001/api";
 
+// --- DEFINIÇÃO DE TIPOS PARA CORRIGIR OS ERROS ---
+interface UsuarioData {
+  id: string;
+  nome: string;
+  email: string;
+  tipo: "cliente" | "vendedor" | "entregador";
+  token: string;
+}
+
+interface ItemPedido {
+  quantidade: number;
+  produto: {
+    nome: string;
+  };
+}
+
+interface Pedido {
+  id: string;
+  status: string;
+  createdAt: string;
+  total: number;
+  loja: {
+    nome: string;
+  };
+  cliente: {
+    nome: string;
+  };
+  itens: ItemPedido[];
+}
+
 export default function PedidosScreen() {
-  const [pedidos, setPedidos] = useState([]);
+  // 1. Tipagem do estado de pedidos
+  const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loading, setLoading] = useState(true);
-  const [usuario, setUsuario] = useState(null);
+  // 2. Tipagem do estado de usuário
+  const [usuario, setUsuario] = useState<UsuarioData | null>(null);
   const router = useRouter();
 
   useFocusEffect(
@@ -34,7 +66,7 @@ export default function PedidosScreen() {
         setLoading(false);
         return;
       }
-      const user = JSON.parse(userJson);
+      const user: UsuarioData = JSON.parse(userJson);
       setUsuario(user);
 
       const response = await fetch(`${API_URL}/pedidos/usuario/${user.id}`);
@@ -47,10 +79,14 @@ export default function PedidosScreen() {
     }
   }
 
-  async function abrirChat(pedido) {
+  // 3. Tipagem do parâmetro 'pedido' (Linha 50)
+  async function abrirChat(pedido: Pedido) {
     try {
       const response = await fetch(`${API_URL}/chat/pedido/${pedido.id}`);
       const chat = await response.json();
+      
+      // 4. Verificação de 'usuario' para evitar erro de objeto possivelmente nulo (Linha 55)
+      if (!usuario) return;
       
       const nomeOutro = usuario.tipo === "cliente" ? pedido.loja.nome : pedido.cliente.nome;
       
@@ -67,7 +103,8 @@ export default function PedidosScreen() {
     }
   }
 
-  const renderPedido = ({ item }) => (
+  // 5. Tipagem do 'item' no renderPedido (Linha 70)
+  const renderPedido = ({ item }: { item: Pedido }) => (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
         <Text style={styles.lojaNome}>{item.loja.nome}</Text>
@@ -79,7 +116,8 @@ export default function PedidosScreen() {
       <Text style={styles.dataText}>{new Date(item.createdAt).toLocaleDateString()}</Text>
       
       <View style={styles.itensContainer}>
-        {item.itens.map((i, idx) => (
+        {/* 6. Tipagem de 'i' e 'idx' no map (Linha 82) */}
+        {item.itens.map((i: ItemPedido, idx: number) => (
           <Text key={idx} style={styles.itemText}>
             {i.quantidade}x {i.produto.nome}
           </Text>
@@ -99,7 +137,8 @@ export default function PedidosScreen() {
     </View>
   );
 
-  function getStatusColor(status) {
+  // 7. Tipagem do parâmetro 'status' (Linha 102)
+  function getStatusColor(status: string) {
     switch (status) {
       case "pendente": return "#f39c12";
       case "preparando": return "#3498db";
