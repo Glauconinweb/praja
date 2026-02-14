@@ -1,12 +1,16 @@
 import express from "express";
-import { loginCliente } from "../controllers/login/clienteLogin.js";
-import { loginVendedor } from "../controllers/login/vendedorLogin.js";
-import { loginEntregador } from "../controllers/login/entregadorLogin.js";
+// Importamos apenas a função 'login' que é a única exportada no seu authController
+import { login } from "../controllers/login/authController.js";
 
 const router = express.Router();
 
-router.post("/cliente", loginCliente);
-router.post("/vendedor", loginVendedor);
-router.post("/entregador", loginEntregador);
+// Agora todas as requisições de login podem bater no mesmo endpoint
+// O próprio controlador decide quem é quem pelo 'tipo' no banco
+router.post("/", login);
+
+// Se você quiser manter rotas separadas no frontend, pode apontar todas para a mesma função:
+router.post("/cliente", login);
+router.post("/vendedor", login);
+router.post("/entregador", login);
 
 export default router;

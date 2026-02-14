@@ -64,7 +64,7 @@ export default function AdicionarProduto() {
     if (!vendedorIdFinal) {
       return Alert.alert(
         "Erro Crítico",
-        "Não foi possível identificar o vendedor. Faça login novamente ou cole um ID no código."
+        "Não foi possível identificar o vendedor. Faça login novamente ou cole um ID no código.",
       );
     }
     // --------------------------------------
@@ -72,7 +72,7 @@ export default function AdicionarProduto() {
     setLoading(true);
     try {
       // Confirme se este IP é o do seu PC atual (ipconfig)
-      const backendUrl = "http://:5001/api/produtos/criar";
+      const backendUrl = `${process.env.EXPO_PUBLIC_API_URL}/produtos/criar`;
 
       const bodyData = {
         nome,

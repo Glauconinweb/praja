@@ -53,4 +53,3 @@ export async function login(req, res) {
     return res.status(500).json({ message: "Erro interno do servidor." });
   }
 }
-router.post("/login", login);

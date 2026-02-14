@@ -35,7 +35,8 @@ type Produto = {
 };
 
 // URL DA SUA API NO RENDER (Substituído localhost por sua URL Live)
-const API_URL = "https://prajaa.onrender.com/api";
+// constants.js
+export const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 const categorias = [
   {

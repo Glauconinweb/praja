@@ -30,7 +30,8 @@ export default function Login() {
 
     try {
       // ⚠️ Use o seu IP aqui. Ex: 192.168.X.X
-      const baseUrl = "http://:5001/api/login";
+      // Pega a URL do .env e concatena com o endpoint de login
+      const baseUrl = `${process.env.EXPO_PUBLIC_API_URL}/login`;
       let endpoint = "";
 
       if (tipoUsuario === "cliente") endpoint = "/cliente";
@@ -97,8 +98,8 @@ export default function Login() {
                     tipo === "cliente"
                       ? "shopping-cart"
                       : tipo === "vendedor"
-                      ? "shopping-bag"
-                      : "truck"
+                        ? "shopping-bag"
+                        : "truck"
                   }
                   size={20}
                   color={tipoUsuario === tipo ? "#ee3f0aff" : "#fff"}
