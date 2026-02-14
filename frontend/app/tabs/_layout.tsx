@@ -7,16 +7,17 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        headerShown: false, // Esconde o cabeçalho padrão (já temos o nosso na Dashboard)
-        tabBarActiveTintColor: "#ee3f0aff", // Cor Laranja quando ativo
-        tabBarInactiveTintColor: "#999", // Cor Cinza quando inativo
+        headerShown: false,
+        tabBarActiveTintColor: "#ee3f0aff",
+        tabBarInactiveTintColor: "#999",
         tabBarStyle: {
-          backgroundColor: "#fff", // Fundo branco
+          backgroundColor: "#fff",
           borderTopWidth: 0,
-          height: Platform.OS === "ios" ? 85 : 60, // Altura confortável
+          // No Render (Web), usamos valores fixos para evitar erros de plataforma
+          height: Platform.OS === "web" ? 70 : Platform.OS === "ios" ? 85 : 60,
           paddingBottom: Platform.OS === "ios" ? 25 : 10,
-          elevation: 10, // Sombra no Android
-          shadowColor: "#000", // Sombra no iOS
+          elevation: 10,
+          shadowColor: "#000",
           shadowOpacity: 0.1,
           shadowRadius: 5,
         },
@@ -26,7 +27,6 @@ export default function TabLayout() {
         },
       }}
     >
-      {/* 1. TELA INÍCIO (Sua Dashboard) */}
       <Tabs.Screen
         name="index"
         options={{
@@ -37,9 +37,8 @@ export default function TabLayout() {
         }}
       />
 
-      {/* 2. FAVORITOS (Placeholder) */}
       <Tabs.Screen
-        name="favoritos" // Você precisará criar favoritos.tsx
+        name="favoritos"
         options={{
           title: "Favoritos",
           tabBarIcon: ({ color }) => (
@@ -48,9 +47,8 @@ export default function TabLayout() {
         }}
       />
 
-      {/* 3. PEDIDOS (Placeholder) */}
       <Tabs.Screen
-        name="pedidos" // Você precisará criar pedidos.tsx
+        name="pedidos"
         options={{
           title: "Pedidos",
           tabBarIcon: ({ color }) => (
@@ -59,20 +57,18 @@ export default function TabLayout() {
         }}
       />
 
-      {/* 4. MINHA LOJA (Painel do Vendedor) */}
       <Tabs.Screen
         name="minha-loja"
         options={{
           title: "Minha Loja",
           tabBarIcon: ({ color }) => (
-            <Feather name="shopping-bag" size={24} color={color} />
+            <Feather name="briefcase" size={24} color={color} />
           ),
         }}
       />
 
-      {/* 5. PERFIL/LOGIN */}
       <Tabs.Screen
-        name="perfil" // Você precisará criar perfil.tsx
+        name="perfil"
         options={{
           title: "Perfil",
           tabBarIcon: ({ color }) => (

@@ -21,8 +21,22 @@ type UsuarioData = {
   email: string;
 };
 
-// Categorias estáticas
-// Categorias com IMAGENS REAIS que funcionam
+type Produto = {
+  id: string;
+  _id?: string; // Para compatibilidade com MongoDB/Render
+  nome: string;
+  descricao?: string;
+  preco: number;
+  imagem?: string;
+  categoria?: string;
+  vendedor?: {
+    nome: string;
+  };
+};
+
+// URL DA SUA API NO RENDER (Substituído localhost por sua URL Live)
+const API_URL = "https://prajaa.onrender.com/api";
+
 const categorias = [
   {
     id: "1",
@@ -38,7 +52,7 @@ const categorias = [
   },
   {
     id: "3",
-    nome: "Salgados", // Mudei de "Pastéis" para Salgados para a foto combinar mais
+    nome: "Salgados",
     imagem:
       "https://images.unsplash.com/photo-1563379926898-05f4575a45d8?q=80&w=150&auto=format&fit=crop",
   },
@@ -65,9 +79,7 @@ const categorias = [
 export default function Dashboard() {
   const router = useRouter();
   const [usuario, setUsuario] = useState<UsuarioData | null>(null);
-
-  // MUDANÇA 1: Agora guardamos PRODUTOS, não lojas
-  const [produtos, setProdutos] = useState([]);
+  const [produtos, setProdutos] = useState<Produto[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
   const [categoriaSelecionada, setCategoriaSelecionada] = useState("Todos");
@@ -75,10 +87,9 @@ export default function Dashboard() {
   useFocusEffect(
     useCallback(() => {
       verificarLogin();
-    }, [])
+    }, []),
   );
 
-  // Busca produtos ao abrir
   useEffect(() => {
     buscarVitrine();
   }, []);
@@ -86,20 +97,23 @@ export default function Dashboard() {
   async function buscarVitrine(termo = "", cat = "Todos") {
     try {
       setLoading(true);
-      let url = "http://localhost:5001/api/busca";
+      // Usando a constante API_URL que definimos acima
+      let url = `${API_URL}/busca`;
       const params = [];
       if (termo) params.push(`q=${encodeURIComponent(termo)}`);
-      if (cat && cat !== "Todos") params.push(`categoria=${encodeURIComponent(cat)}`);
-      
+      if (cat && cat !== "Todos")
+        params.push(`categoria=${encodeURIComponent(cat)}`);
+
       if (params.length > 0) {
         url += "?" + params.join("&");
       } else {
-        url = "http://localhost:5001/api/produtos/vitrine";
+        url = `${API_URL}/produtos/vitrine`;
       }
 
       const response = await fetch(url);
       const data = await response.json();
-      setProdutos(data);
+      console.log("O que veio da API:", data);
+      setProdutos(Array.isArray(data) ? data : []); // Garante que produtos seja sempre um array
     } catch (error) {
       console.log("Erro ao buscar produtos:", error);
     } finally {
@@ -112,7 +126,6 @@ export default function Dashboard() {
     const delayDebounceFn = setTimeout(() => {
       buscarVitrine(busca, categoriaSelecionada);
     }, 500);
-
     return () => clearTimeout(delayDebounceFn);
   }, [busca, categoriaSelecionada]);
 
@@ -130,14 +143,6 @@ export default function Dashboard() {
     setUsuario(null);
   }
 
-  // Função auxiliar para formatar preço
-  const formatarPreco = (valor: number) => {
-    return valor.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    });
-  };
-
   return (
     <View style={styles.container}>
       <ScrollView
@@ -147,7 +152,7 @@ export default function Dashboard() {
         <View style={styles.webWrapper}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.grandeTitulo}>Prajá </Text>
+            <Text style={styles.grandeTitulo}>Prajá</Text>
             <View style={styles.headerRight}>
               {usuario ? (
                 <View style={styles.usuarioLogado}>
@@ -206,73 +211,82 @@ export default function Dashboard() {
               contentContainerStyle={{ paddingHorizontal: 20 }}
               keyExtractor={(item) => item.id}
               renderItem={({ item }) => (
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[
-                    styles.card, 
-                    categoriaSelecionada === item.nome && { opacity: 0.7 }
+                    styles.card,
+                    categoriaSelecionada === item.nome && { opacity: 0.7 },
                   ]}
-                  onPress={() => setCategoriaSelecionada(
-                    categoriaSelecionada === item.nome ? "Todos" : item.nome
-                  )}
+                  onPress={() =>
+                    setCategoriaSelecionada(
+                      categoriaSelecionada === item.nome ? "Todos" : item.nome,
+                    )
+                  }
                 >
-                  <Image source={{ uri: item.imagem }} style={[
-                    styles.img,
-                    categoriaSelecionada === item.nome && { borderColor: '#000' }
-                  ]} />
-                  <Text style={[
-                    styles.nomeCategoria,
-                    categoriaSelecionada === item.nome && { fontWeight: '800' }
-                  ]}>{item.nome}</Text>
+                  <Image
+                    source={{ uri: item.imagem }}
+                    style={[
+                      styles.img,
+                      categoriaSelecionada === item.nome && {
+                        borderColor: "#fff",
+                        borderWidth: 3,
+                      },
+                    ]}
+                  />
+                  <Text
+                    style={[
+                      styles.nomeCategoria,
+                      categoriaSelecionada === item.nome && {
+                        fontWeight: "800",
+                      },
+                    ]}
+                  >
+                    {item.nome}
+                  </Text>
                 </TouchableOpacity>
               )}
             />
           </View>
 
-          {/* --- LISTA DE PRODUTOS (ESTILO IFOOD) --- */}
+          {/* Lista de Produtos */}
           <Text style={styles.tituloSecao}>Destaques da Região</Text>
-
           <View style={styles.listaProdutos}>
             {loading ? (
               <ActivityIndicator color="#fff" size="large" />
             ) : produtos.length === 0 ? (
-              <Text style={{ color: "#fff", marginLeft: 20 }}>
-                Nenhum produto disponível no momento.
+              <Text
+                style={{ color: "#fff", textAlign: "center", marginTop: 20 }}
+              >
+                Nenhum produto disponível.
               </Text>
             ) : (
               produtos.map((item: any) => (
-                <TouchableOpacity key={item.id} style={styles.produtoCard}>
-                  {/* Imagem do Produto */}
+                <TouchableOpacity
+                  key={item.id || item._id}
+                  style={styles.produtoCard}
+                >
                   <Image
                     source={{
                       uri: item.imagem || "https://via.placeholder.com/150",
                     }}
                     style={styles.produtoImg}
                   />
-
-                  {/* Informações */}
                   <View style={styles.produtoInfo}>
                     <Text style={styles.produtoNome} numberOfLines={1}>
                       {item.nome}
                     </Text>
-
-                    {/* Nome da Loja (Vendedor) */}
                     <View style={styles.lojaTag}>
                       <Feather name="shopping-bag" size={12} color="#666" />
                       <Text style={styles.lojaNome}>
                         {item.vendedor?.nome || "Loja Parceira"}
                       </Text>
                     </View>
-
                     <Text style={styles.produtoDesc} numberOfLines={2}>
                       {item.descricao || "Sem descrição."}
                     </Text>
-
                     <Text style={styles.produtoPreco}>
                       R$ {item.preco?.toFixed(2).replace(".", ",")}
                     </Text>
                   </View>
-
-                  {/* Botãozinho de Mais (Opcional) */}
                   <View style={styles.btnAdd}>
                     <Feather name="plus" size={18} color="#ee3f0aff" />
                   </View>
@@ -286,6 +300,7 @@ export default function Dashboard() {
   );
 }
 
+// Os estilos (StyleSheet) permanecem os mesmos que você já tem
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -293,8 +308,6 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === "web" ? 20 : 50,
   },
   webWrapper: { width: "100%", maxWidth: 800, alignSelf: "center" },
-
-  // Header & Busca (Iguais ao anterior)
   header: {
     paddingHorizontal: 20,
     marginBottom: 10,
@@ -352,8 +365,6 @@ const styles = StyleSheet.create({
   },
   icon: { marginRight: 10 },
   input: { flex: 1, color: "#fff", fontSize: 16 },
-
-  // Categorias
   tituloSecao: {
     fontSize: 20,
     fontWeight: "700",
@@ -373,20 +384,15 @@ const styles = StyleSheet.create({
     backgroundColor: "#ccc",
   },
   nomeCategoria: { color: "#fff", fontSize: 12, fontWeight: "600" },
-
-  // --- ESTILOS NOVOS: CARD DE PRODUTO ---
-  listaProdutos: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
+  listaProdutos: { paddingHorizontal: 20, paddingBottom: 20 },
   produtoCard: {
     backgroundColor: "#fff",
     borderRadius: 12,
     padding: 12,
     marginBottom: 15,
-    flexDirection: "row", // Deixa a imagem na esquerda e texto na direita
-    elevation: 3, // Sombra Android
-    shadowColor: "#000", // Sombra iOS
+    flexDirection: "row",
+    elevation: 3,
+    shadowColor: "#000",
     shadowOpacity: 0.1,
     shadowRadius: 4,
     alignItems: "center",
@@ -398,41 +404,21 @@ const styles = StyleSheet.create({
     backgroundColor: "#eee",
     marginRight: 15,
   },
-  produtoInfo: {
-    flex: 1,
-    justifyContent: "center",
-  },
+  produtoInfo: { flex: 1, justifyContent: "center" },
   produtoNome: {
     fontSize: 16,
     fontWeight: "bold",
     color: "#333",
     marginBottom: 4,
   },
-  lojaTag: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  lojaNome: {
-    fontSize: 12,
-    color: "#666",
-    marginLeft: 4,
-  },
-  produtoDesc: {
-    fontSize: 12,
-    color: "#999",
-    marginBottom: 8,
-    lineHeight: 16,
-  },
-  produtoPreco: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#ee3f0aff", // Azul ou Verde (Preço em destaque)
-  },
+  lojaTag: { flexDirection: "row", alignItems: "center", marginBottom: 4 },
+  lojaNome: { fontSize: 12, color: "#666", marginLeft: 4 },
+  produtoDesc: { fontSize: 12, color: "#999", marginBottom: 8, lineHeight: 16 },
+  produtoPreco: { fontSize: 16, fontWeight: "bold", color: "#ee3f0aff" },
   btnAdd: {
     padding: 8,
     borderRadius: 20,
-    backgroundColor: "rgba(238, 63, 10, 0.1)", // Laranja bem clarinho
+    backgroundColor: "rgba(238, 63, 10, 0.1)",
     marginLeft: 5,
   },
 });

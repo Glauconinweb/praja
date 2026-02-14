@@ -13,6 +13,7 @@ model User {
   email    String    @unique
   senha    String
   tipo     String    // "cliente", "vendedor", "entregador"
+  emailVerified Boolean   @default(false) 
   produtos Produto[] // Relacionamento reverso
 }
 
