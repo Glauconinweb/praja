@@ -38,10 +38,11 @@ export default function Login() {
       else if (tipoUsuario === "vendedor") endpoint = "/vendedor";
       else if (tipoUsuario === "entregador") endpoint = "/entregador";
 
-      const response = await fetch(`${baseUrl}${endpoint}`, {
+      const response = await fetch(baseUrl, {
+        // baseUrl já é .../api/login
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, senha }),
+        body: JSON.stringify({ email, senha }), // O back identifica o tipo pelo e-mail
       });
 
       const data = await response.json();

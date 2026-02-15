@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 
 /**
  * GERENCIADOR DE ESTOQUE - BACKEND
- * 
+ *
  * Este módulo gerencia a lógica de estoque, integrando com o banco de dados MongoDB via Prisma.
  */
 
@@ -21,20 +21,23 @@ const GerenciadorEstoque = {
         where: { id: produtoId },
         data: {
           quantidade,
-          emEstoque
-        }
+          emEstoque,
+        },
       });
 
       return {
         sucesso: true,
         produto,
-        mensagem: emEstoque 
-          ? `Estoque atualizado: ${quantidade} unidades.` 
-          : `Produto esgotado e pausado automaticamente.`
+        mensagem: emEstoque
+          ? `Estoque atualizado: ${quantidade} unidades.`
+          : `Produto esgotado e pausado automaticamente.`,
       };
     } catch (error) {
       console.error("Erro ao atualizar estoque:", error);
-      return { sucesso: false, mensagem: "Erro ao atualizar estoque no banco de dados." };
+      return {
+        sucesso: false,
+        mensagem: "Erro ao atualizar estoque no banco de dados.",
+      };
     }
   },
 
@@ -44,7 +47,7 @@ const GerenciadorEstoque = {
   async processarVenda(produtoId, quantidadeVendida) {
     try {
       const produto = await prisma.produto.findUnique({
-        where: { id: produtoId }
+        where: { id: produtoId },
       });
 
       if (!produto) {
@@ -52,9 +55,9 @@ const GerenciadorEstoque = {
       }
 
       if (produto.quantidade < quantidadeVendida) {
-        return { 
-          sucesso: false, 
-          mensagem: `Estoque insuficiente. Disponível: ${produto.quantidade}` 
+        return {
+          sucesso: false,
+          mensagem: `Estoque insuficiente. Disponível: ${produto.quantidade}`,
         };
       }
 
@@ -73,13 +76,13 @@ const GerenciadorEstoque = {
     try {
       const produto = await prisma.produto.findUnique({
         where: { id: produtoId },
-        select: { emEstoque: true, quantidade: true }
+        select: { emEstoque: true, quantidade: true },
       });
-      return produto ? (produto.emEstoque && produto.quantidade > 0) : false;
+      return produto ? produto.emEstoque && produto.quantidade > 0 : false;
     } catch (error) {
       return false;
     }
-  }
+  },
 };
 
 export default GerenciadorEstoque;

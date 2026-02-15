@@ -27,13 +27,13 @@ export async function login(req, res) {
     }
 
     // 4. (Opcional) Bloqueia login se o e-mail não estiver verificado
-    if (!user.emailVerified) {
+    /*if (!user.emailVerified) {
       return res.status(403).json({
         message:
           "Por favor, verifique seu e-mail antes de acessar a plataforma.",
       });
     }
-
+\*/
     // 5. Gera o token JWT incluindo o tipo do usuário
     const token = gerarToken(user);
 

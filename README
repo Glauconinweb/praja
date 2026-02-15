@@ -142,7 +142,7 @@ FRONTEND_URL="http://localhost:8081"
 
 4️⃣ Rodar o servidor
 cd backend
-npm run dev
+npm start server
 
 5️⃣ Rodar o app mobile (Expo)
 cd ../mobile

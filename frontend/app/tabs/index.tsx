@@ -397,6 +397,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     alignItems: "center",
+    ...Platform.select({
+      web: {
+        boxShadow: "0px 4px 10px rgba(0, 0, 0, 0.1)", // Padrão CSS para Web
+      },
+      default: {
+        elevation: 3, // Para Android
+        shadowColor: "#000", // Para iOS
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+    }),
   },
   produtoImg: {
     width: 90,
