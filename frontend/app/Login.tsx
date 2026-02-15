@@ -29,29 +29,34 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // ⚠️ Use o seu IP aqui. Ex: 192.168.X.X
-      // Pega a URL do .env e concatena com o endpoint de login
       const baseUrl = `${process.env.EXPO_PUBLIC_API_URL}/login`;
-      let endpoint = "";
-
-      if (tipoUsuario === "cliente") endpoint = "/cliente";
-      else if (tipoUsuario === "vendedor") endpoint = "/vendedor";
-      else if (tipoUsuario === "entregador") endpoint = "/entregador";
 
       const response = await fetch(baseUrl, {
-        // baseUrl já é .../api/login
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, senha }), // O back identifica o tipo pelo e-mail
+        body: JSON.stringify({ email, senha }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
+        // 1. Salva o token separadamente
         await AsyncStorage.setItem("token", data.token);
-        const userToSave = { tipo: data.tipo, token: data.token, email: email };
+
+        // 2. MONTAGEM CORRETA DO OBJETO (Incluindo o ID que vem do Back)
+        const userToSave = {
+          id: data.usuario.id, // <--- O PONTO CHAVE ESTAVA FALTANDO AQUI
+          nome: data.usuario.nome,
+          email: data.usuario.email,
+          tipo: data.usuario.tipo, // Pega o tipo real que vem do banco
+          token: data.token,
+        };
+
         await AsyncStorage.setItem("user", JSON.stringify(userToSave));
-        Alert.alert("Sucesso", `Bem-vindo, ${tipoUsuario}!`);
+
+        Alert.alert("Sucesso", `Bem-vindo, ${userToSave.nome}!`);
+
+        // 3. Redirecionamento inteligente
         router.replace("./");
       } else {
         Alert.alert("Erro", data.message || "Falha ao entrar.");

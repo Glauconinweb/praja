@@ -56,7 +56,7 @@ export default function AdicionarProduto() {
 
     // --- ÁREA DE AJUSTE RÁPIDO (BYPASS) ---
     // Se o login não salvou o ID, cole um ID válido do seu MongoDB aqui entre as aspas para testar
-    const ID_FIXO_PARA_TESTE = "";
+    const ID_FIXO_PARA_TESTE = "6991fbda91aa7dd97c679820";
 
     // Tenta pegar do usuário logado, se não tiver, usa o fixo
     const vendedorIdFinal = usuario?.id || ID_FIXO_PARA_TESTE;
