@@ -9,26 +9,16 @@ import {
   Alert,
   ActivityIndicator,
   Image,
+  Platform,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// 1. Define o tipo para parar o erro "property does not exist on type never"
-type UsuarioData = {
-  id: string;
-  nome: string;
-  email: string;
-  tipo: string;
-  token: string;
-};
-
-export default function AdicionarProduto() {
+export default function EditarProduto() {
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-
-  // 2. Aplica a tipagem aqui
-  const [usuario, setUsuario] = useState<UsuarioData | null>(null);
+  const { id } = useLocalSearchParams();
+  const [loading, setLoading] = useState(true);
+  const [salvando, setSalvando] = useState(false);
 
   // Formulário
   const [nome, setNome] = useState("");
@@ -39,67 +29,94 @@ export default function AdicionarProduto() {
   const [imagem, setImagem] = useState("");
 
   useEffect(() => {
-    async function getUser() {
-      const userJson = await AsyncStorage.getItem("user");
-      if (userJson) {
-        const parsedUser = JSON.parse(userJson);
-        setUsuario(parsedUser);
-        console.log("Usuário carregado:", parsedUser); // Debug para ver se o ID está vindo
+    async function buscarProduto() {
+      if (!id) return;
+      
+      try {
+        setLoading(true);
+        const baseUrl = Platform.OS === "android" ? "http://10.0.2.2:5001" : "http://localhost:5001";
+        const response = await fetch(`${baseUrl}/api/produtos/${id}`);
+        const data = await response.json();
+        
+        if (response.ok) {
+          setNome(data.nome || "");
+          setPreco(data.preco ? data.preco.toString() : "");
+          setQuantidade(data.quantidade ? data.quantidade.toString() : "");
+          setDescricao(data.descricao || "");
+          setCategoria(data.categoria || "");
+          setImagem(data.imagem || "");
+        } else {
+          Alert.alert("Erro", data.message || "Não foi possível carregar os dados do produto.");
+          router.back();
+        }
+      } catch (error) {
+        console.error("Erro ao buscar produto:", error);
+        Alert.alert("Erro", "Falha na conexão com o servidor.");
+      } finally {
+        setLoading(false);
       }
     }
-    getUser();
-  }, []);
+    
+    buscarProduto();
+  }, [id]);
 
-  async function handleCadastro() {
-    if (!nome || !preco || !quantidade)
-      return Alert.alert("Erro", "Preencha os campos obrigatórios.");
-
-    const vendedorIdFinal = usuario?.id;
-
-    if (!vendedorIdFinal) {
-      return Alert.alert(
-        "Erro",
-        "Não foi possível identificar o vendedor. Por favor, faça login novamente."
-      );
+  async function handleSalvar() {
+    if (!nome || !preco || !quantidade) {
+      return Alert.alert("Erro", "Preencha os campos obrigatórios (Nome, Preço e Estoque).");
     }
 
-    setLoading(true);
+    setSalvando(true);
     try {
-      // Confirme se este IP é o do seu PC atual (ipconfig)
-      const backendUrl = "http://localhost:5001/api/produtos/criar"; // Altere para seu IP se testar em dispositivo físico
+      const baseUrl = Platform.OS === "android" ? "http://10.0.2.2:5001" : "http://localhost:5001";
+      
+      const precoFloat = parseFloat(preco.replace(",", "."));
+      const quantidadeInt = parseInt(quantidade);
 
-      const bodyData = {
-        nome,
-        preco,
-        quantidade,
-        descricao,
-        categoria,
-        imagem,
-        vendedorId: vendedorIdFinal, // Agora enviamos o ID obrigatório
-      };
+      if (isNaN(precoFloat)) {
+        setSalvando(false);
+        return Alert.alert("Erro", "O preço deve ser um número válido.");
+      }
 
-      console.log("Enviando:", bodyData); // Debug
+      if (isNaN(quantidadeInt)) {
+        setSalvando(false);
+        return Alert.alert("Erro", "A quantidade deve ser um número inteiro.");
+      }
 
-      const response = await fetch(backendUrl, {
-        method: "POST",
+      const response = await fetch(`${baseUrl}/api/produtos/${id}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bodyData),
+        body: JSON.stringify({
+          nome,
+          preco: precoFloat,
+          quantidade: quantidadeInt,
+          descricao,
+          categoria,
+          imagem,
+        }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        Alert.alert("Sucesso", "Produto cadastrado!");
+        Alert.alert("Sucesso", "Produto atualizado com sucesso!");
         router.back();
       } else {
-        Alert.alert("Erro", data.message || "Falha no backend");
+        Alert.alert("Erro", data.message || "Falha ao atualizar produto.");
       }
     } catch (error) {
-      console.log(error);
-      Alert.alert("Erro", "Falha na conexão. Verifique o IP.");
+      console.error("Erro ao salvar produto:", error);
+      Alert.alert("Erro", "Falha na conexão. Verifique o servidor.");
     } finally {
-      setLoading(false);
+      setSalvando(false);
     }
+  }
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: "center" }]}>
+        <ActivityIndicator size="large" color="#ee3f0aff" />
+      </View>
+    );
   }
 
   return (
@@ -108,7 +125,7 @@ export default function AdicionarProduto() {
         <TouchableOpacity onPress={() => router.back()}>
           <Feather name="arrow-left" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Novo Produto</Text>
+        <Text style={styles.headerTitle}>Editar Produto</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -175,14 +192,14 @@ export default function AdicionarProduto() {
           />
 
           <TouchableOpacity
-            style={styles.btnCadastrar}
-            onPress={handleCadastro}
-            disabled={loading}
+            style={styles.btnSalvar}
+            onPress={handleSalvar}
+            disabled={salvando}
           >
-            {loading ? (
+            {salvando ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.btnText}>SALVAR PRODUTO</Text>
+              <Text style={styles.btnText}>SALVAR ALTERAÇÕES</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -196,7 +213,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: "#ee3f0aff",
     padding: 20,
-    paddingTop: 50,
+    paddingTop: Platform.OS === "ios" ? 50 : 20,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
@@ -223,7 +240,7 @@ const styles = StyleSheet.create({
   },
   textArea: { height: 100, textAlignVertical: "top" },
   row: { flexDirection: "row" },
-  btnCadastrar: {
+  btnSalvar: {
     backgroundColor: "#ee3f0aff",
     padding: 15,
     borderRadius: 8,

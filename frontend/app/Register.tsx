@@ -35,9 +35,9 @@ export default function Register() {
     setLoading(true);
     try {
       // ⚠️ Use o seu IP aqui
-      const baseUrl = `${process.env.EXPO_PUBLIC_API_URL}/register`;
+      const backendUrl = "http://localhost:5001/api/register"; // Altere para seu IP se testar em dispositivo físico
 
-      const response = await fetch(baseUrl, {
+      const response = await fetch(backendUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nome, email, senha, tipo: tipoUsuario }),
@@ -100,8 +100,8 @@ export default function Register() {
                     tipo === "cliente"
                       ? "shopping-cart"
                       : tipo === "vendedor"
-                        ? "shopping-bag"
-                        : "truck"
+                      ? "shopping-bag"
+                      : "truck"
                   }
                   size={20}
                   color={tipoUsuario === tipo ? "#ee3f0aff" : "#fff"}

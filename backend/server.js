@@ -8,6 +8,9 @@ import loginRoutes from "./routes/loginRoutes.js";
 import produtoRoutes from "./routes/produtoRoutes.js";
 import registerRoutes from "./routes/registerRoutes.js";
 import lojaRoutes from "./routes/lojaRoutes.js";
+import userActionsRoutes from "./routes/userActionsRoutes.js";
+import pedidoRoutes from "./routes/pedidoRoutes.js";
+import chatRoutes from "./routes/chatRoutes.js";
 import { buscarProdutos } from "./controllers/busca inteligente/busca.js";
 import {
   resetPassword,
@@ -29,6 +32,9 @@ app.use("/api/register", registerRoutes);
 app.post("/api/reset-password", resetPassword);
 app.post("/api/update-password", updatePassword);
 app.use("/api/produtos", produtoRoutes);
+app.use("/api/user", userActionsRoutes);
+app.use("/api/pedidos", pedidoRoutes);
+app.use("/api/chat", chatRoutes);
 app.use("/api/lojas", lojaRoutes);
 app.get("/api/busca", buscarProdutos);
 
