@@ -153,7 +153,10 @@ export default function MinhaLoja() {
               <Text style={styles.menuText}>Add Produto</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => router.push("/GerenciarEstoque")}
+            >
               <View style={styles.iconBg}>
                 <Feather name="package" size={24} color="#ee3f0aff" />
               </View>

@@ -29,15 +29,15 @@ export default function Login() {
     setLoading(true);
 
     try {
+<<<<<<< HEAD
       // ⚠️ Use o seu IP aqui. Ex: 192.168.X.X
       const baseUrl = "http://localhost:5001/api/login"; // Altere para seu IP se testar em dispositivo físico
       let endpoint = "";
+=======
+      const baseUrl = `${process.env.EXPO_PUBLIC_API_URL}/login`;
+>>>>>>> 9a01b8c41e33c12f1bd2770645d32904fbfcb4f8
 
-      if (tipoUsuario === "cliente") endpoint = "/cliente";
-      else if (tipoUsuario === "vendedor") endpoint = "/vendedor";
-      else if (tipoUsuario === "entregador") endpoint = "/entregador";
-
-      const response = await fetch(`${baseUrl}${endpoint}`, {
+      const response = await fetch(baseUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, senha }),
@@ -46,7 +46,9 @@ export default function Login() {
       const data = await response.json();
 
       if (response.ok) {
+        // 1. Salva o token separadamente
         await AsyncStorage.setItem("token", data.token);
+<<<<<<< HEAD
         const userToSave = { 
           id: data.id, 
           nome: data.nome, 
@@ -56,6 +58,23 @@ export default function Login() {
         };
         await AsyncStorage.setItem("user", JSON.stringify(userToSave));
         Alert.alert("Sucesso", `Bem-vindo, ${data.nome || tipoUsuario}!`);
+=======
+
+        // 2. MONTAGEM CORRETA DO OBJETO (Incluindo o ID que vem do Back)
+        const userToSave = {
+          id: data.usuario.id, // <--- O PONTO CHAVE ESTAVA FALTANDO AQUI
+          nome: data.usuario.nome,
+          email: data.usuario.email,
+          tipo: data.usuario.tipo, // Pega o tipo real que vem do banco
+          token: data.token,
+        };
+
+        await AsyncStorage.setItem("user", JSON.stringify(userToSave));
+
+        Alert.alert("Sucesso", `Bem-vindo, ${userToSave.nome}!`);
+
+        // 3. Redirecionamento inteligente
+>>>>>>> 9a01b8c41e33c12f1bd2770645d32904fbfcb4f8
         router.replace("./");
       } else {
         Alert.alert("Erro", data.message || "Falha ao entrar.");

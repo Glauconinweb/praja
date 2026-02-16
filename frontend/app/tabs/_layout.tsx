@@ -10,6 +10,7 @@ export default function TabLayout() {
         headerShown: false,
         tabBarActiveTintColor: "#ee3f0aff",
         tabBarInactiveTintColor: "#999",
+<<<<<<< HEAD
         tabBarStyle: {
           backgroundColor: "#fff",
           borderTopWidth: 0,
@@ -20,9 +21,31 @@ export default function TabLayout() {
           shadowOpacity: 0.1,
           shadowRadius: 5,
         },
+=======
+>>>>>>> 9a01b8c41e33c12f1bd2770645d32904fbfcb4f8
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: "600",
+        },
+        tabBarStyle: {
+          backgroundColor: "#fff",
+          borderTopWidth: 0,
+          height: Platform.OS === "web" ? 70 : Platform.OS === "ios" ? 85 : 60,
+          paddingBottom: Platform.OS === "ios" ? 25 : 10,
+          // Ajuste multiplataforma para sombras
+          ...Platform.select({
+            web: {
+              boxShadow: "0px -2px 10px rgba(0,0,0,0.1)", // Sombra para cima na Web
+            },
+            android: {
+              elevation: 10,
+            },
+            ios: {
+              shadowColor: "#000",
+              shadowOpacity: 0.1,
+              shadowRadius: 5,
+            },
+          }),
         },
       }}
     >

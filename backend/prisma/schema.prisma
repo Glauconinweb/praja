@@ -8,6 +8,7 @@ datasource db {
 }
 
 model User {
+<<<<<<< HEAD
   id              String      @id @default(auto()) @map("_id") @db.ObjectId
   nome            String
   email           String      @unique
@@ -35,6 +36,14 @@ model User {
 
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+=======
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  nome     String
+  email    String    @unique
+  senha    String
+  tipo     String    // "cliente", "vendedor", "entregador" 
+  produtos Produto[] // Relacionamento reverso
+>>>>>>> 9a01b8c41e33c12f1bd2770645d32904fbfcb4f8
 }
 
 model Produto {
