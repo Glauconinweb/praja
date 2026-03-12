@@ -1,0 +1,104 @@
+Documentação Técnica: Gerenciador de Estoque Atualizado
+
+Autor: Cleodom Gomes Da Silva Filho
+Data da Atualização: 20 de Janeiro de 2026
+Módulos Envolvidos: GerenciadorEstoque.js (Controller), produtoController.js (Controller), produtoRoutes.js (Rotas)
+
+1. Visão Geral
+
+O módulo GerenciadorEstoque.js foi refatorado para atuar como uma camada de serviço centralizada para todas as operações de estoque. Sua principal função é garantir a integridade dos dados de estoque, atualizando a quantidade e o status de disponibilidade (emEstoque) de um produto no banco de dados de forma atômica.
+
+2. Controller: Gerenciador de Estoque (GerenciadorEstoque.js)
+
+O arquivo GerenciadorEstoque.js (localizado em backend/controllers/controleestoque/) agora utiliza o Prisma para interagir diretamente com a coleção Produto.
+
+2.1. Métodos Principais
+
+Método
+Descrição
+Parâmetros
+Retorno
+atualizarEstoque
+Atualiza a quantidade de um produto e define o status emEstoque (true se quantidade > 0, false caso contrário).
+produtoId, novaQuantidade
+{ sucesso: Boolean, produto: Object, mensagem: String }
+processarVenda
+Verifica a disponibilidade e reduz o estoque do produto.
+produtoId, quantidadeVendida
+{ sucesso: Boolean, mensagem: String }
+verificarDisponibilidade
+Consulta o status de estoque de um produto.
+produtoId
+Boolean
+
+
+
+
+3. Integração no produtoController.js
+
+O GerenciadorEstoque foi integrado ao produtoController.js para garantir que as regras de negócio de estoque sejam aplicadas em pontos chave.
+
+3.1. Criação de Produto
+
+A criação de um novo produto agora garante que o campo emEstoque seja definido corretamente com base na quantidade inicial.
+
+3.2. Nova Função de Atualização
+
+A função atualizarEstoqueProduto foi adicionada ao produtoController.js para expor a funcionalidade de atualização de estoque via API.
+
+JavaScript
+
+
+// produtoController.js
+export async function atualizarEstoqueProduto(req, res) {
+  const { id } = req.params;
+  const { quantidade } = req.body;
+
+  const resultado = await GerenciadorEstoque.atualizarEstoque(id, quantidade);
+  // ... (lógica de resposta)
+}
+
+
+4. Rota de API para Estoque (produtoRoutes.js)
+
+Uma nova rota foi adicionada ao produtoRoutes.js para permitir que o frontend ou outros serviços atualizem o estoque de um produto.
+
+Método
+Rota
+Controller
+Descrição
+PATCH
+/api/produtos/estoque/:id
+atualizarEstoqueProduto
+Atualiza a quantidade de estoque de um produto específico. O corpo da requisição deve conter { "quantidade": 10 }.
+
+
+
+
+5. Exemplo de Uso (Frontend/Serviço)
+
+Para atualizar o estoque de um produto com ID 65b0d9e8f4d0c1e8f4d0c1e8 para 50 unidades:
+
+JavaScript
+
+
+// Exemplo de requisição PATCH
+const produtoId = "65b0d9e8f4d0c1e8f4d0c1e8";
+const novaQuantidade = 50;
+
+fetch(`http://localhost:5001/api/produtos/estoque/${produtoId}`, {
+  method: 'PATCH',
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({ quantidade: novaQuantidade } ),
+})
+.then(response => response.json())
+.then(data => console.log('Estoque atualizado:', data))
+.catch(error => console.error('Erro:', error));
+
+
+6. Referências
+
+[1] Prisma. [Updating records](https://www.prisma.io/docs/concepts/components/prisma-client/crud#update-records ).
+[2] Express. [Routing methods](https://expressjs.com/en/guide/routing.html ).
