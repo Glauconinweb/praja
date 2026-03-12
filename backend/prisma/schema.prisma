@@ -1,0 +1,219 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  nome            String
+  email           String      @unique
+  senha           String
+  tipo            String
+  emailVerified   Boolean     @default(false)
+  descricao       String?
+  telefone        String?
+  endereco        String?
+  foto            String?
+  chavePix        String?
+  tipoChavePix    String?
+  planoId         String?     @db.ObjectId
+  plano           Plano?      @relation(fields: [planoId], references: [id])
+  planoAtivo      Boolean     @default(false)
+  planoExpiracao  DateTime?
+  produtos        Produto[]
+  favoritos       Favorito[]
+  historico       Historico[]
+  pedidosCliente  Pedido[]    @relation("ClientePedidos")
+  pedidosLoja     Pedido[]    @relation("LojaPedidos")
+  pedidosEntregador Pedido[]  @relation("EntregadorPedidos")
+  chatsComoCliente Chat[]     @relation("ChatCliente")
+  chatsComoLoja    Chat[]     @relation("ChatLoja")
+  mensagensEnviadas Mensagem[]
+  transacoesVendedor Transacao[] @relation("TransacaoVendedor")
+  transacoesEntregador Transacao[] @relation("TransacaoEntregador")
+  assinaturas     Assinatura[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model Produto {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  nome            String
+  descricao       String?
+  preco           Float
+  quantidade      Int
+  imagem          String?
+  categoria       String
+  emEstoque       Boolean     @default(true)
+  vendedorId      String      @db.ObjectId
+  vendedor        User        @relation(fields: [vendedorId], references: [id])
+  favoritadoPor   Favorito[]
+  vistoPor        Historico[]
+  itensPedido     ItemPedido[]
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+model Favorito {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  produtoId String   @db.ObjectId
+  produto   Produto  @relation(fields: [produtoId], references: [id])
+  createdAt DateTime @default(now())
+  @@unique([userId, produtoId])
+}
+
+model Historico {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  produtoId String   @db.ObjectId
+  produto   Produto  @relation(fields: [produtoId], references: [id])
+  vistoEm   DateTime @default(now())
+}
+
+model Pedido {
+  id                String      @id @default(auto()) @map("_id") @db.ObjectId
+  clienteId         String      @db.ObjectId
+  cliente           User        @relation("ClientePedidos", fields: [clienteId], references: [id])
+  lojaId            String      @db.ObjectId
+  loja              User        @relation("LojaPedidos", fields: [lojaId], references: [id])
+  entregadorId      String?     @db.ObjectId
+  entregador        User?       @relation("EntregadorPedidos", fields: [entregadorId], references: [id])
+  status            String      @default("pendente")
+  total             Float
+  taxaEntrega       Float       @default(0)
+  valorProdutos     Float       @default(0)
+  nomeCliente       String?
+  enderecoEntrega   String?
+  metodoPagamento   String?
+  statusPagamento   String      @default("pendente")
+  codigoConfirmacao String?
+  codigoConfirmadoEm DateTime?
+  chavePix          String?
+  itens             ItemPedido[]
+  chat              Chat?
+  pagamento         Pagamento?
+  transacoes        Transacao[]
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+}
+
+model ItemPedido {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  pedidoId   String   @db.ObjectId
+  pedido     Pedido   @relation(fields: [pedidoId], references: [id])
+  produtoId  String   @db.ObjectId
+  produto    Produto  @relation(fields: [produtoId], references: [id])
+  quantidade Int
+  precoUnit  Float
+}
+
+model Pagamento {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  pedidoId          String   @unique @db.ObjectId
+  pedido            Pedido   @relation(fields: [pedidoId], references: [id])
+  metodo            String
+  status            String   @default("pendente")
+  valorTotal        Float
+  valorProdutos     Float
+  valorTaxaEntrega  Float
+  nomeCliente       String?
+  enderecoCliente   String?
+  chavePix          String?
+  referenciaExterna String?
+  codigoConfirmacao String?
+  codigoConfirmadoEm DateTime?
+  codigoConfirmadoPor String?
+  apiTransacaoId    String?
+  apiStatus         String?
+  apiResposta       String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Transacao {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  pedidoId        String   @db.ObjectId
+  pedido          Pedido   @relation(fields: [pedidoId], references: [id])
+  tipo            String
+  valor           Float
+  status          String   @default("pendente")
+  vendedorId      String?  @db.ObjectId
+  vendedor        User?    @relation("TransacaoVendedor", fields: [vendedorId], references: [id])
+  entregadorId    String?  @db.ObjectId
+  entregador      User?    @relation("TransacaoEntregador", fields: [entregadorId], references: [id])
+  chavePix        String?
+  apiTransacaoId  String?
+  apiStatus       String?
+  liberadoEm      DateTime?
+  pagoEm          DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Plano {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  nome            String
+  descricao       String?
+  preco           Float    @default(0)
+  duracaoDias     Int      @default(30)
+  maxProdutos     Int      @default(10)
+  maxPedidosMes   Int      @default(50)
+  taxaPlataforma  Float    @default(0)
+  temDestaque     Boolean  @default(false)
+  temRelatorios   Boolean  @default(false)
+  temSuporte      Boolean  @default(false)
+  recursos        String[]
+  ativo           Boolean  @default(true)
+  usuarios        User[]
+  assinaturas     Assinatura[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Assinatura {
+  id                String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String   @db.ObjectId
+  user              User     @relation(fields: [userId], references: [id])
+  planoId           String   @db.ObjectId
+  plano             Plano    @relation(fields: [planoId], references: [id])
+  status            String   @default("ativa")
+  inicioEm          DateTime @default(now())
+  expiraEm          DateTime
+  valorPago         Float    @default(0)
+  metodoPagamento   String?
+  referenciaExterna String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Chat {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  pedidoId    String     @unique @db.ObjectId
+  pedido      Pedido     @relation(fields: [pedidoId], references: [id])
+  clienteId   String     @db.ObjectId
+  cliente     User       @relation("ChatCliente", fields: [clienteId], references: [id])
+  lojaId      String     @db.ObjectId
+  loja        User       @relation("ChatLoja", fields: [lojaId], references: [id])
+  ativo       Boolean    @default(true)
+  mensagens   Mensagem[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model Mensagem {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  chatId    String   @db.ObjectId
+  chat      Chat     @relation(fields: [chatId], references: [id])
+  autorId   String   @db.ObjectId
+  autor     User     @relation(fields: [autorId], references: [id])
+  texto     String
+  lida      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
