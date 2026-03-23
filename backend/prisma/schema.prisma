@@ -13,22 +13,21 @@ model User {
   email           String      @unique
   senha           String
   tipo            String
+  lojas           Loja[]
   emailVerified   Boolean     @default(false)
   descricao       String?
   telefone        String?
   endereco        String?
   foto            String?
-  chavePix        String?
-  tipoChavePix    String?
+  chavePix        String? 
+  tipoChavePix    String? 
   planoId         String?     @db.ObjectId
   plano           Plano?      @relation(fields: [planoId], references: [id])
   planoAtivo      Boolean     @default(false)
   planoExpiracao  DateTime?
-  produtos        Produto[]
   favoritos       Favorito[]
   historico       Historico[]
   pedidosCliente  Pedido[]    @relation("ClientePedidos")
-  pedidosLoja     Pedido[]    @relation("LojaPedidos")
   pedidosEntregador Pedido[]  @relation("EntregadorPedidos")
   chatsComoCliente Chat[]     @relation("ChatCliente")
   chatsComoLoja    Chat[]     @relation("ChatLoja")
@@ -40,6 +39,24 @@ model User {
   updatedAt       DateTime    @updatedAt
 }
 
+model Loja {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  nome        String
+  descricao   String?
+  telefone    String?
+  endereco    String?
+  foto        String?
+
+  vendedorId  String   @db.ObjectId
+  vendedor    User     @relation(fields: [vendedorId], references: [id])
+
+  produtos    Produto[]
+  pedidos     Pedido[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model Produto {
   id              String      @id @default(auto()) @map("_id") @db.ObjectId
   nome            String
@@ -48,9 +65,10 @@ model Produto {
   quantidade      Int
   imagem          String?
   categoria       String
+  subcategoria    String?
   emEstoque       Boolean     @default(true)
-  vendedorId      String      @db.ObjectId
-  vendedor        User        @relation(fields: [vendedorId], references: [id])
+  lojaId          String   @db.ObjectId
+  loja            Loja     @relation(fields: [lojaId], references: [id])
   favoritadoPor   Favorito[]
   vistoPor        Historico[]
   itensPedido     ItemPedido[]
@@ -81,8 +99,8 @@ model Pedido {
   id                String      @id @default(auto()) @map("_id") @db.ObjectId
   clienteId         String      @db.ObjectId
   cliente           User        @relation("ClientePedidos", fields: [clienteId], references: [id])
-  lojaId            String      @db.ObjectId
-  loja              User        @relation("LojaPedidos", fields: [lojaId], references: [id])
+  lojaId String @db.ObjectId
+  loja   Loja   @relation(fields: [lojaId], references: [id])
   entregadorId      String?     @db.ObjectId
   entregador        User?       @relation("EntregadorPedidos", fields: [entregadorId], references: [id])
   status            String      @default("pendente")
@@ -95,7 +113,6 @@ model Pedido {
   statusPagamento   String      @default("pendente")
   codigoConfirmacao String?
   codigoConfirmadoEm DateTime?
-  chavePix          String?
   itens             ItemPedido[]
   chat              Chat?
   pagamento         Pagamento?
@@ -199,8 +216,8 @@ model Chat {
   pedido      Pedido     @relation(fields: [pedidoId], references: [id])
   clienteId   String     @db.ObjectId
   cliente     User       @relation("ChatCliente", fields: [clienteId], references: [id])
-  lojaId      String     @db.ObjectId
-  loja        User       @relation("ChatLoja", fields: [lojaId], references: [id])
+  lojaId String @db.ObjectId
+  loja   User   @relation("ChatLoja", fields: [lojaId], references: [id])
   ativo       Boolean    @default(true)
   mensagens   Mensagem[]
   createdAt   DateTime   @default(now())

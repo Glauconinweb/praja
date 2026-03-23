@@ -3,17 +3,22 @@ import {
   cadastrarChavePix,
   buscarChavePix,
   removerChavePix,
+  buscarPixPorLoja,
 } from "../controllers/pixController.js";
+import { verificarToken } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Cadastrar ou atualizar chave Pix
-router.put("/chave/:userId", cadastrarChavePix);
+// 🔐 Cadastrar ou atualizar chave Pix (usuário logado)
+router.put("/chave", verificarToken, cadastrarChavePix);
 
-// Buscar chave Pix de um usuário
-router.get("/chave/:userId", buscarChavePix);
+// 🔐 Buscar chave Pix do próprio usuário
+router.get("/minha-chave", verificarToken, buscarChavePix);
 
-// Remover chave Pix
-router.delete("/chave/:userId", removerChavePix);
+// 🔐 Remover chave Pix
+router.delete("/chave", verificarToken, removerChavePix);
+
+// 🌐 Público - Cliente busca Pix da loja para pagar
+router.get("/loja/:lojaId", buscarPixPorLoja);
 
 export default router;

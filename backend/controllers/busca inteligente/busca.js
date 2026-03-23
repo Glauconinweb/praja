@@ -11,43 +11,50 @@ const prisma = new PrismaClient();
 // 1. BUSCAR PRODUTOS (Com filtros de nome e categoria)
 export async function buscarProdutos(req, res) {
   try {
-    const { q, categoria } = req.query;
+    const { q, categoria, subcategoria } = req.query;
 
     const where = {
       emEstoque: true,
     };
 
-    // Filtro por termo de busca (nome ou descrição)
+    // 🔎 Busca por texto
     if (q) {
       where.OR = [
-        { nome: { contains: q, mode: 'insensitive' } },
-        { descricao: { contains: q, mode: 'insensitive' } }
+        { nome: { contains: q, mode: "insensitive" } },
+        { descricao: { contains: q, mode: "insensitive" } },
       ];
     }
 
-    // Filtro por categoria
-    if (categoria && categoria !== 'Todos') {
-      where.categoria = categoria;
+    // 📦 Categoria
+    if (categoria && categoria !== "Todos") {
+      where.categoria = categoria.toLowerCase().trim();
+    }
+
+    // 🍰 SUBCATEGORIA (🔥 FALTAVA ISSO)
+    if (subcategoria) {
+      where.subcategoria = subcategoria.toLowerCase().trim();
     }
 
     const produtos = await prisma.produto.findMany({
       where,
       include: {
-        vendedor: {
+        loja: {
           select: {
             nome: true,
-          }
-        }
+          },
+        },
       },
       orderBy: {
-        createdAt: 'desc'
-      }
+        createdAt: "desc",
+      },
     });
 
     return res.status(200).json(produtos);
   } catch (error) {
     console.error("Erro na busca de produtos:", error);
-    return res.status(500).json({ message: "Erro interno ao realizar busca." });
+    return res.status(500).json({
+      message: "Erro interno ao realizar busca.",
+    });
   }
 }
 

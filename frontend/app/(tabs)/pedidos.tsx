@@ -110,7 +110,12 @@ export default function PedidosScreen() {
       if (!userJson) { setLoading(false); setRefreshing(false); return; }
       const user: UsuarioData = JSON.parse(userJson);
       setUsuario(user);
-      const response = await fetch(`${API_URL}/pedidos/usuario/${user.id}`);
+      const response = await fetch(`${API_URL}/pedidos/usuario/${user.id}`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${user.token}`,
+        },
+      });
       const data = await response.json();
       setPedidos(Array.isArray(data) ? data : []);
     } catch (error) {
@@ -123,9 +128,14 @@ export default function PedidosScreen() {
 
   async function abrirChat(pedido: Pedido) {
     try {
-      const response = await fetch(`${API_URL}/chat/pedido/${pedido.id}`);
+      if (!usuario) return; 
+      
+      const response = await fetch(`${API_URL}/chat/pedido/${pedido.id}`, {
+        headers: {
+          Authorization: `Bearer ${usuario.token}`,
+        },
+      });
       const chat = await response.json();
-      if (!usuario) return;
       const nomeOutro = usuario.tipo === "cliente" ? pedido.loja.nome : pedido.cliente.nome;
       router.push({ pathname: "/chat", params: { chatId: chat.id, pedidoId: pedido.id, nomeOutro } });
     } catch (error) {

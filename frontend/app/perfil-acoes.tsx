@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, Text, SafeAreaView } from 'react-native';
-import { useUserActions } from './hooks/useUserActions';
-import { UserActionsList } from './components/UserActionsList';
+import { useUserActions } from '../hooks/useUserActions';
+import { UserActionsList } from '../components/UserActionsList';
 
 export default function PerfilAcoesScreen() {
   // Em um cenário real, o userId viria do contexto de autenticação

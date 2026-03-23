@@ -1,23 +1,39 @@
 import express from "express";
+import { verificarToken } from "../middleware/authMiddleware.js";
+
 import {
   criarProduto,
-  listarMeusProdutos,
   listarTodosProdutos,
   buscarProdutoPorId,
   atualizarProduto,
   atualizarEstoqueProduto,
+  listarProdutosPorLoja,
   deletarProduto,
 } from "../controllers/produtoController.js";
 
 const router = express.Router();
 
-// Rotas de CRUD para produtos
-router.post("/criar", criarProduto);                     // Criar produto
-router.get("/vitrine", listarTodosProdutos);             // Listar todos produtos (vitrine)
-router.get("/vendedor/:vendedorId", listarMeusProdutos); // Listar produtos de uma loja
-router.get("/:id", buscarProdutoPorId);                  // Buscar produto por ID
-router.put("/:id", atualizarProduto);                    // Atualizar produto completo
-router.patch("/estoque/:id", atualizarEstoqueProduto);   // Atualizar apenas estoque
-router.delete("/:id", deletarProduto);   
+// 🔐 CRIAR PRODUTO (protegido)
+router.post("/", verificarToken, criarProduto);
+
+// 🛍️ VITRINE (público)
+router.get("/vitrine", listarTodosProdutos);
+
+// 📦 PRODUTOS DE UMA LOJA (IMPORTANTE: antes do :id)
+router.get("/loja/:id", listarProdutosPorLoja);
+
+// 🔍 BUSCAR PRODUTO POR ID
+router.get("/:id", buscarProdutoPorId);
+
+// ✏️ ATUALIZAR PRODUTO
+router.put("/:id", verificarToken, atualizarProduto);
+
+// 📦 ATUALIZAR ESTOQUE
+router.patch("/estoque/:id", verificarToken, atualizarEstoqueProduto);
+
+// 🗑️ DELETAR PRODUTO
+router.delete("/:id", verificarToken, deletarProduto);
+
+
 
 export default router;

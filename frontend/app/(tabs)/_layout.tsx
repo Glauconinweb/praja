@@ -50,15 +50,6 @@ export default function TabLayout() {
         }}
       />
 
-      <Tabs.Screen
-        name="favoritos"
-        options={{
-          title: "Favoritos",
-          tabBarIcon: ({ color }) => (
-            <Feather name="heart" size={24} color={color} />
-          ),
-        }}
-      />
 
       <Tabs.Screen
         name="pedidos"
@@ -80,22 +71,22 @@ export default function TabLayout() {
         }}
       />
 
+
+      {/* 🔥 TELAS OCULTAS */}
       <Tabs.Screen
-        name="perfil"
+        name="editar-produto"
         options={{
-          title: "Perfil",
-          tabBarIcon: ({ color }) => (
-            <Feather name="user" size={24} color={color} />
-          ),
+          href: null,
         }}
       />
 
       <Tabs.Screen
-        name="editar-produto"
+        name="criar-loja"
         options={{
-          href: null, // Esconde do menu inferior
+          href: null,
         }}
       />
+
     </Tabs>
   );
 }

@@ -51,20 +51,27 @@ export default function GerenciarPixScreen() {
   async function carregarDados() {
     try {
       const userJson = await AsyncStorage.getItem("user");
-      if (!userJson) {
+      const token = await AsyncStorage.getItem("token");
+
+      if (!userJson || !token) {
         router.replace("/Login");
         return;
       }
+
       const user = JSON.parse(userJson);
       setUserId(user.id);
 
-      // Busca chave Pix atual
-      const response = await fetch(`${API_URL}/pix/chave/${user.id}`);
+      const response = await fetch(`${API_URL}/pix/chave/${user.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`, // ✅ CORRETO
+        },
+      });
+
       if (response.ok) {
         const data = await response.json();
         setTipoAtual(data.tipoChavePix);
         setChaveAtual(data.chavePix);
-        setTipoSelecionado(data.tipoChavePix as TipoChavePix);
+        setTipoSelecionado(data.tipoChavePix);
         setChave(data.chavePix);
       }
     } catch (error) {
@@ -73,19 +80,27 @@ export default function GerenciarPixScreen() {
       setCarregando(false);
     }
   }
-
   async function salvarChavePix() {
-    if (!chave.trim()) {
-      Alert.alert("Atenção", "Informe a chave Pix.");
+    if (!chave.trim() || !userId) {
+      Alert.alert("Erro", "Dados inválidos");
       return;
     }
 
     setLoading(true);
+
     try {
+      const token = await AsyncStorage.getItem("token");
+
       const response = await fetch(`${API_URL}/pix/chave/${userId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tipo: tipoSelecionado, chave: chave.trim() }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // ✅ IMPORTANTE
+        },
+        body: JSON.stringify({
+          tipo: tipoSelecionado,
+          chave: chave.trim(),
+        }),
       });
 
       const data = await response.json();
@@ -97,21 +112,23 @@ export default function GerenciarPixScreen() {
 
       setTipoAtual(tipoSelecionado);
       setChaveAtual(chave.trim());
-      Alert.alert("Sucesso!", "Chave Pix cadastrada com sucesso!", [
+
+      Alert.alert("Sucesso!", "Chave Pix cadastrada!", [
         { text: "OK", onPress: () => router.back() },
       ]);
     } catch (error) {
-      console.error("Erro ao salvar chave Pix:", error);
-      Alert.alert("Erro de Conexão", "Verifique sua conexão e tente novamente.");
+      Alert.alert("Erro", "Falha na conexão");
     } finally {
       setLoading(false);
     }
   }
 
   async function removerChavePix() {
+    if (!userId) return;
+
     Alert.alert(
       "Remover Chave Pix",
-      "Tem certeza que deseja remover sua chave Pix? Você não poderá receber pagamentos sem ela.",
+      "Deseja remover?",
       [
         { text: "Cancelar", style: "cancel" },
         {
@@ -119,18 +136,26 @@ export default function GerenciarPixScreen() {
           style: "destructive",
           onPress: async () => {
             setLoading(true);
+
             try {
+              const token = await AsyncStorage.getItem("token");
+
               const response = await fetch(`${API_URL}/pix/chave/${userId}`, {
                 method: "DELETE",
+                headers: {
+                  Authorization: `Bearer ${token}`, // ✅ IMPORTANTE
+                },
               });
+
               if (response.ok) {
                 setTipoAtual(null);
                 setChaveAtual(null);
                 setChave("");
-                Alert.alert("Removido", "Chave Pix removida com sucesso.");
+
+                Alert.alert("Sucesso", "Chave removida");
               }
-            } catch (error) {
-              Alert.alert("Erro", "Não foi possível remover a chave Pix.");
+            } catch {
+              Alert.alert("Erro", "Falha ao remover");
             } finally {
               setLoading(false);
             }

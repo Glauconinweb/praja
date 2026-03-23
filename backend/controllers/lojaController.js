@@ -1,61 +1,60 @@
 import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
-// 1. CRIAR LOJA (Registrar vendedor)
+// 1. CRIAR LOJA
 export async function criarLoja(req, res) {
   try {
-    const { nome, email, senha, descricao, telefone, endereco, foto } = req.body;
-
-    // Validação básica
-    if (!nome || !email || !senha) {
-      return res.status(400).json({
-        message: "Preencha os campos obrigatórios (nome, email, senha).",
-      });
+    if (!req.user) {
+      return res.status(401).json({ message: "Não autenticado." });
     }
 
-    // Verifica se o email já existe
-    const usuarioExistente = await prisma.user.findUnique({
-      where: { email },
+    const { nome, descricao, telefone, endereco, foto } = req.body;
+    const vendedorId = req.user.id;
+
+    // Verifica se é vendedor
+    const usuario = await prisma.user.findUnique({
+      where: { id: vendedorId },
     });
 
-    if (usuarioExistente) {
-      return res.status(400).json({
-        message: "Este email já está cadastrado.",
+    if (!usuario || usuario.tipo !== "vendedor") {
+      return res.status(403).json({
+        message: "Apenas vendedores podem criar lojas.",
       });
     }
 
-    // Criptografa a senha
-    const senhaHash = await bcrypt.hash(senha, 10);
+    if (!nome) {
+      return res.status(400).json({
+        message: "Nome da loja é obrigatório.",
+      });
+    }
 
-    // Cria a loja (vendedor)
-    const loja = await prisma.user.create({
+    const quantidadeLojas = await prisma.loja.count({
+      where: {
+        vendedorId,
+      },
+    });
+
+    if (quantidadeLojas >= 20) {
+      return res.status(403).json({
+        message: "Você atingiu o limite máximo de 20 lojas.",
+      });
+    }
+
+    const novaLoja = await prisma.loja.create({
       data: {
         nome,
-        email,
-        senha: senhaHash,
-        tipo: "vendedor",
-        descricao: descricao || null,
-        telefone: telefone || null,
-        endereco: endereco || null,
-        foto: foto || null,
-      },
-      select: {
-        id: true,
-        nome: true,
-        email: true,
-        descricao: true,
-        telefone: true,
-        endereco: true,
-        foto: true,
-        createdAt: true,
+        descricao,
+        telefone,
+        endereco,
+        foto,
+        vendedorId,
       },
     });
 
     return res.status(201).json({
       message: "Loja criada com sucesso!",
-      loja,
+      loja: novaLoja,
     });
   } catch (error) {
     console.error("Erro ao criar loja:", error);
@@ -66,19 +65,15 @@ export async function criarLoja(req, res) {
 // 2. LISTAR TODAS AS LOJAS
 export async function listarLojas(req, res) {
   try {
-    const lojas = await prisma.user.findMany({
-      where: {
-        tipo: "vendedor",
-      },
-      select: {
-        id: true,
-        nome: true,
-        email: true,
-        descricao: true,
-        telefone: true,
-        endereco: true,
-        foto: true,
-        createdAt: true,
+    const lojas = await prisma.loja.findMany({
+      include: {
+        vendedor: {
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+          },
+        },
         _count: {
           select: { produtos: true },
         },
@@ -92,37 +87,96 @@ export async function listarLojas(req, res) {
   }
 }
 
-// 3. BUSCAR LOJA POR ID
+// 3. LISTAR MINHAS LOJAS
+export async function listarMinhasLojas(req, res) {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Não autenticado." });
+    }
+
+    if (req.user.tipo !== "vendedor") {
+      return res.status(403).json({
+        message: "Apenas vendedores têm lojas.",
+      });
+    }
+
+    const vendedorId = req.user.id;
+
+    const lojas = await prisma.loja.findMany({
+      where: {
+        vendedorId,
+      },
+    });
+
+    return res.status(200).json(lojas);
+  } catch (error) {
+    console.error("Erro ao listar lojas do vendedor:", error);
+    return res.status(500).json({ message: "Erro ao buscar lojas." });
+  }
+}
+
+// 4. ATUALIZAR LOJA
+export async function atualizarLoja(req, res) {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Não autenticado." });
+    }
+
+    const { id } = req.params;
+    const { nome, descricao, telefone, endereco, foto } = req.body;
+
+    const lojaExistente = await prisma.loja.findUnique({
+      where: { id },
+    });
+
+    if (!lojaExistente) {
+      return res.status(404).json({ message: "Loja não encontrada." });
+    }
+
+    // 🔐 Verifica se é dono da loja
+    if (lojaExistente.vendedorId !== req.user.id) {
+      return res.status(403).json({
+        message: "Você não tem permissão para alterar esta loja.",
+      });
+    }
+
+    const dadosAtualizacao = {};
+
+    if (nome !== undefined) dadosAtualizacao.nome = nome;
+    if (descricao !== undefined) dadosAtualizacao.descricao = descricao;
+    if (telefone !== undefined) dadosAtualizacao.telefone = telefone;
+    if (endereco !== undefined) dadosAtualizacao.endereco = endereco;
+    if (foto !== undefined) dadosAtualizacao.foto = foto;
+
+    const lojaAtualizada = await prisma.loja.update({
+      where: { id },
+      data: dadosAtualizacao,
+    });
+
+    return res.status(200).json({
+      message: "Loja atualizada com sucesso!",
+      loja: lojaAtualizada,
+    });
+  } catch (error) {
+    console.error("Erro ao atualizar loja:", error);
+    return res.status(500).json({ message: "Erro interno ao atualizar loja." });
+  }
+}
+
+// 5. BUSCAR LOJA POR ID
 export async function buscarLojaPorId(req, res) {
   try {
     const { id } = req.params;
 
-    const loja = await prisma.user.findUnique({
-      where: {
-        id: id,
-        tipo: "vendedor",
-      },
-      select: {
-        id: true,
-        nome: true,
-        email: true,
-        descricao: true,
-        telefone: true,
-        endereco: true,
-        foto: true,
-        createdAt: true,
-        updatedAt: true,
+    const loja = await prisma.loja.findUnique({
+      where: { id },
+      include: {
         produtos: {
-          select: {
-            id: true,
-            nome: true,
-            descricao: true,
-            preco: true,
-            quantidade: true,
-            imagem: true,
-            categoria: true,
-            emEstoque: true,
-          },
+          take: 20,
+          skip: 0
+        },
+        vendedor: {
+          select: { id: true, nome: true, email: true },
         },
       },
     });
@@ -138,70 +192,59 @@ export async function buscarLojaPorId(req, res) {
   }
 }
 
-// 4. ATUALIZAR LOJA
-export async function atualizarLoja(req, res) {
+// 6. BUSCAR PRODUTOS POR LOJA
+export async function buscarProdutosPorLoja(req, res) {
   try {
     const { id } = req.params;
-    const { nome, descricao, telefone, endereco, foto } = req.body;
 
-    // Verifica se a loja existe
-    const lojaExistente = await prisma.user.findUnique({
-      where: { id: id },
+    const loja = await prisma.loja.findUnique({
+      where: { id },
+      include: {
+        produtos: true
+      }
     });
 
-    if (!lojaExistente || lojaExistente.tipo !== "vendedor") {
-      return res.status(404).json({ message: "Loja não encontrada." });
+    if (!loja) {
+      return res.status(404).json({ message: "Loja não encontrada" });
     }
 
-    // Atualiza apenas os campos fornecidos
-    const dadosAtualizacao = {};
-    if (nome !== undefined) dadosAtualizacao.nome = nome;
-    if (descricao !== undefined) dadosAtualizacao.descricao = descricao;
-    if (telefone !== undefined) dadosAtualizacao.telefone = telefone;
-    if (endereco !== undefined) dadosAtualizacao.endereco = endereco;
-    if (foto !== undefined) dadosAtualizacao.foto = foto;
-
-    const lojaAtualizada = await prisma.user.update({
-      where: { id: id },
-      data: dadosAtualizacao,
-      select: {
-        id: true,
-        nome: true,
-        email: true,
-        descricao: true,
-        telefone: true,
-        endereco: true,
-        foto: true,
-        updatedAt: true,
-      },
-    });
-
-    return res.status(200).json({
-      message: "Loja atualizada com sucesso!",
-      loja: lojaAtualizada,
-    });
+    return res.status(200).json(loja.produtos);
   } catch (error) {
-    console.error("Erro ao atualizar loja:", error);
-    return res.status(500).json({ message: "Erro interno ao atualizar loja." });
+    console.error("Erro ao buscar produtos:", error);
+    return res.status(500).json({
+      message: "Erro ao buscar produtos da loja",
+    });
   }
 }
 
-// 7. DELETAR PRODUTO
-export async function deletarProduto(req, res) {
+export async function deletarLoja(req, res) {
   try {
     const { id } = req.params;
 
-    // Verifica se o produto existe
-    const produto = await prisma.produto.findUnique({ where: { id } });
-    if (!produto) {
-      return res.status(404).json({ message: "Produto não encontrado." });
+    const loja = await prisma.loja.findUnique({
+      where: { id },
+    });
+
+    if (!req.user) {
+      return res.status(401).json({ message: "Não autenticado." });
     }
 
-    await prisma.produto.delete({ where: { id } });
+    if (!loja) {
+      return res.status(404).json({ message: "Loja não encontrada" });
+    }
 
-    return res.status(200).json({ message: "Produto deletado com sucesso!" });
+    if (loja.vendedorId !== req.user.id) {
+      return res.status(403).json({
+        message: "Sem permissão",
+      });
+    }
+
+    await prisma.loja.delete({
+      where: { id },
+    });
+
+    return res.json({ message: "Loja deletada com sucesso" });
   } catch (error) {
-    console.error("Erro ao deletar produto:", error);
-    return res.status(500).json({ message: "Erro interno ao deletar produto." });
+    return res.status(500).json({ message: "Erro ao deletar loja" });
   }
 }

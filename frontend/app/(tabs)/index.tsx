@@ -38,44 +38,50 @@ type Produto = {
 // constants.js
 export const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
-const categorias = [
-  {
-    id: "1",
-    nome: "Doces",
-    imagem:
-      "https://images.unsplash.com/photo-1551024709-8f23befc6f87?q=80&w=150&auto=format&fit=crop",
-  },
-  {
-    id: "2",
-    nome: "Bolos",
-    imagem:
-      "https://images.unsplash.com/photo-1565958011703-44f9829ba187?q=80&w=150&auto=format&fit=crop",
-  },
-  {
-    id: "3",
-    nome: "Salgados",
-    imagem:
-      "https://images.unsplash.com/photo-1563379926898-05f4575a45d8?q=80&w=150&auto=format&fit=crop",
-  },
-  {
-    id: "4",
-    nome: "Lanches",
-    imagem:
-      "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=150&auto=format&fit=crop",
-  },
-  {
-    id: "5",
-    nome: "Bebidas",
-    imagem:
-      "https://images.unsplash.com/photo-1544145945-f90425340c7e?q=80&w=150&auto=format&fit=crop",
-  },
-  {
-    id: "6",
-    nome: "Mercado",
-    imagem:
-      "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=150&auto=format&fit=crop",
-  },
-];
+const CATEGORIAS = {
+  lanches: [
+    {
+      nome: "doces",
+      imagem: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?q=80&w=150",
+    },
+    {
+      nome: "salgados",
+      imagem: "https://images.unsplash.com/photo-1563379926898-05f4575a45d8?q=80&w=150",
+    },
+    {
+      nome: "bebidas",
+      imagem: "https://images.unsplash.com/photo-1544145945-f90425340c7e?q=80&w=150",
+    },
+  ],
+  roupas: [
+    {
+      nome: "camisa",
+      imagem: "https://images.unsplash.com/photo-1521334884684-d80222895322?q=80&w=150",
+    },
+    {
+      nome: "calção",
+      imagem: "https://images.unsplash.com/photo-1593032465175-481ac7f401a0?q=80&w=150",
+    },
+    {
+      nome: "cueca",
+      imagem: "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?q=80&w=150",
+    },
+    {
+      nome: "calcinha",
+      imagem: "https://images.unsplash.com/photo-1581044777550-4cfa60707c03?q=80&w=150",
+    },
+  ],
+} as const;
+
+type Categoria = keyof typeof CATEGORIAS;
+type SubcategoriaNome =
+  | "doces"
+  | "salgados"
+  | "bebidas"
+  | "camisa"
+  | "calção"
+  | "cueca"
+  | "calcinha";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -83,7 +89,17 @@ export default function Dashboard() {
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
-  const [categoriaSelecionada, setCategoriaSelecionada] = useState("Todos");
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState<Categoria | "Todos">("Todos");
+  const [subcategoriaSelecionada, setSubcategoriaSelecionada] = useState<SubcategoriaNome | "">("");
+
+  const categorias = Object.keys(CATEGORIAS).map((cat, index) => ({
+    id: String(index),
+    nome: cat,
+    imagem:
+      cat === "lanches"
+        ? "https://images.unsplash.com/photo-1551024709-8f23befc6f87?q=80&w=150"
+        : "https://images.unsplash.com/photo-1521334884684-d80222895322?q=80&w=150",
+  }));
 
   useFocusEffect(
     useCallback(() => {
@@ -91,19 +107,22 @@ export default function Dashboard() {
     }, []),
   );
 
-  useEffect(() => {
-    buscarVitrine();
-  }, []);
-
-  async function buscarVitrine(termo = "", cat = "Todos") {
+  async function buscarVitrine(termo = "", cat = "Todos", sub = "") {
     try {
       setLoading(true);
-      // Usando a constante API_URL que definimos acima
+
       let url = `${API_URL}/busca`;
       const params = [];
+
       if (termo) params.push(`q=${encodeURIComponent(termo)}`);
-      if (cat && cat !== "Todos")
+
+      if (cat && cat !== "Todos") {
         params.push(`categoria=${encodeURIComponent(cat)}`);
+      }
+
+      if (sub) {
+        params.push(`subcategoria=${encodeURIComponent(sub)}`);
+      }
 
       if (params.length > 0) {
         url += "?" + params.join("&");
@@ -113,8 +132,8 @@ export default function Dashboard() {
 
       const response = await fetch(url);
       const data = await response.json();
-      console.log("O que veio da API:", data);
-      setProdutos(Array.isArray(data) ? data : []); // Garante que produtos seja sempre um array
+
+      setProdutos(Array.isArray(data) ? data : []);
     } catch (error) {
       console.log("Erro ao buscar produtos:", error);
     } finally {
@@ -125,10 +144,11 @@ export default function Dashboard() {
   // Efeito para busca com debounce
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      buscarVitrine(busca, categoriaSelecionada);
+      buscarVitrine(busca, categoriaSelecionada, subcategoriaSelecionada);
     }, 500);
+
     return () => clearTimeout(delayDebounceFn);
-  }, [busca, categoriaSelecionada]);
+  }, [busca, categoriaSelecionada, subcategoriaSelecionada]);
 
   async function verificarLogin() {
     try {
@@ -182,7 +202,7 @@ export default function Dashboard() {
           </View>
 
           <Text style={styles.subtituloHeader}>
-            O que você quer comer hoje?
+            O que você quer comprar hoje?
           </Text>
 
           {/* Busca */}
@@ -217,11 +237,13 @@ export default function Dashboard() {
                     styles.card,
                     categoriaSelecionada === item.nome && { opacity: 0.7 },
                   ]}
-                  onPress={() =>
-                    setCategoriaSelecionada(
-                      categoriaSelecionada === item.nome ? "Todos" : item.nome,
-                    )
-                  }
+                  onPress={() => {
+                    const novaCategoria =
+                      categoriaSelecionada === item.nome ? "Todos" : (item.nome as Categoria);
+
+                    setCategoriaSelecionada(novaCategoria);
+                    setSubcategoriaSelecionada(""); // limpa subcategoria
+                  }}
                 >
                   <Image
                     source={{ uri: item.imagem }}
@@ -248,6 +270,45 @@ export default function Dashboard() {
             />
           </View>
 
+          {categoriaSelecionada !== "Todos" && (
+            <>
+              <Text style={styles.tituloSecao}>Subcategorias</Text>
+
+              <ScrollView horizontal contentContainerStyle={{ paddingHorizontal: 20 }}>
+                {CATEGORIAS[categoriaSelecionada as keyof typeof CATEGORIAS].map(
+                  (sub) => (
+                  <TouchableOpacity
+                    key={sub.nome}
+                    style={[
+                      styles.card,
+                      subcategoriaSelecionada === sub.nome && { opacity: 0.7 },
+                    ]}
+                    onPress={() =>
+                      setSubcategoriaSelecionada(
+                        subcategoriaSelecionada === sub.nome ? "" : sub.nome
+                      )
+                    }
+                  >
+
+                    <Image
+                      source={{ uri: sub.imagem }}
+                      style={[
+                        styles.img,
+                        subcategoriaSelecionada === sub.nome && {
+                          borderColor: "#fff",
+                          borderWidth: 3,
+                        },
+                      ]}
+                    />
+                    
+
+                    <Text style={styles.nomeCategoria}>{sub.nome}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </>
+          )}
+
           {/* Lista de Produtos */}
           <Text style={styles.tituloSecao}>Destaques da Região</Text>
           <View style={styles.listaProdutos}>
@@ -260,7 +321,7 @@ export default function Dashboard() {
                 Nenhum produto disponível.
               </Text>
             ) : (
-              produtos.map((item: any) => (
+              produtos.map((item: Produto) => (
                 <TouchableOpacity
                   key={item.id || item._id}
                   style={styles.produtoCard}

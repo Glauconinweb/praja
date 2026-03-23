@@ -7,14 +7,15 @@ import {
   listarPedidosDisponiveis,
   aceitarPedido,
 } from "../controllers/pedidoController.js";
+import { verificarToken } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/criar", criarPedido);
-router.put("/:id/status", atualizarStatusPedido);
-router.put("/:id/aceitar", aceitarPedido);
-router.get("/usuario/:userId", listarPedidosUsuario);
-router.get("/disponiveis", listarPedidosDisponiveis);
-router.get("/:id", buscarPedidoPorId);
+router.post("/criar", verificarToken, criarPedido);
+router.put("/:id/status", verificarToken, atualizarStatusPedido);
+router.put("/:id/aceitar", verificarToken, aceitarPedido);
+router.get("/meus", verificarToken, listarPedidosUsuario);
+router.get("/disponiveis",verificarToken, listarPedidosDisponiveis);
+router.get("/:id", verificarToken, buscarPedidoPorId);
 
 export default router;

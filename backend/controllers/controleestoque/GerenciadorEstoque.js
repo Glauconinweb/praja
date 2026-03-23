@@ -63,30 +63,43 @@ const GerenciadorEstoque = {
    * Processa a venda de um produto, reduzindo o estoque.
    */
   async processarVenda(produtoId, quantidadeVendida) {
-    try {
-      const produto = await prisma.produto.findUnique({
-        where: { id: produtoId },
-      });
+  try {
+    const qtdVenda = parseInt(quantidadeVendida);
 
-      if (!produto) {
-        return { sucesso: false, mensagem: "Produto não encontrado." };
-      }
-
-      const qtdVenda = parseInt(quantidadeVendida);
-      if (produto.quantidade < qtdVenda) {
-        return {
-          sucesso: false,
-          mensagem: `Estoque insuficiente. Disponível: ${produto.quantidade}`,
-        };
-      }
-
-      const novaQuantidade = produto.quantidade - qtdVenda;
-      return await this.atualizarEstoque(produtoId, novaQuantidade);
-    } catch (error) {
-      console.error("Erro ao processar venda:", error);
-      return { sucesso: false, mensagem: "Erro ao processar venda." };
+    if (isNaN(qtdVenda) || qtdVenda <= 0) {
+      return { sucesso: false, mensagem: "Quantidade inválida" };
     }
-  },
+
+    const produtoAtualizado = await prisma.produto.updateMany({
+      where: {
+        id: produtoId,
+        quantidade: {
+          gte: qtdVenda, // garante que tem estoque suficiente
+        },
+      },
+      data: {
+        quantidade: {
+          decrement: qtdVenda,
+        },
+      },
+    });
+
+    if (produtoAtualizado.count === 0) {
+      return {
+        sucesso: false,
+        mensagem: "Estoque insuficiente ou produto não encontrado.",
+      };
+    }
+
+    return {
+      sucesso: true,
+      mensagem: "Venda processada com sucesso",
+    };
+  } catch (error) {
+    console.error("Erro ao processar venda:", error);
+    return { sucesso: false, mensagem: "Erro ao processar venda." };
+  }
+},
 
   /**
    * Verifica se um produto está disponível.

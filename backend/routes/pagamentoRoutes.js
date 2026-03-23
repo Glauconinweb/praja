@@ -6,22 +6,19 @@ import {
   buscarCodigoConfirmacao,
   listarTransacoesUsuario,
 } from "../controllers/pagamentoController.js";
+import { verificarToken } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-// Selecionar método de pagamento após fazer o pedido
-router.post("/selecionar-metodo", selecionarMetodoPagamento);
+// 🔐 todas protegidas
+router.post("/selecionar-metodo", verificarToken, selecionarMetodoPagamento);
+router.post("/confirmar-entrega", verificarToken, confirmarEntregaComCodigo);
 
-// Confirmar entrega com código de 6 dígitos (usado pelo entregador)
-router.post("/confirmar-entrega", confirmarEntregaComCodigo);
+// ❗ REMOVE clienteId da URL (inseguro)
+router.get("/pedido/:pedidoId", verificarToken, buscarPagamentoPorPedido);
+router.get("/codigo/:pedidoId", verificarToken, buscarCodigoConfirmacao);
 
-// Buscar detalhes do pagamento de um pedido
-router.get("/pedido/:pedidoId", buscarPagamentoPorPedido);
-
-// Buscar código de confirmação (apenas para o cliente do pedido)
-router.get("/codigo/:pedidoId/:clienteId", buscarCodigoConfirmacao);
-
-// Listar transações de um vendedor ou entregador
-router.get("/transacoes/:userId", listarTransacoesUsuario);
+// ❗ REMOVE userId da URL
+router.get("/transacoes", verificarToken, listarTransacoesUsuario);
 
 export default router;
