@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from "react";
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -14,11 +14,11 @@ import { useRouter, useFocusEffect } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_URL } from "../../services/useActions";
 
-// 🔥 CORREÇÃO: Alterado de "lanches" para "lanches" (estava exibindo lançamentos por algum motivo no seu print, 
-// mas aqui garantimos que a chave e os valores estão corretos)
 const CATEGORIAS = {
   lanches: ["doces", "salgados", "bebidas"],
-  roupas: ["camisa", "calção", "cueca", "calcinha"],
+  vestimentas: ["roupas", "calcados", "acessorios"],
+  casa: ["moveis", "decoracoes", "utensilios"],
+  eletronicos: ["celulares", "informatica", "video_games", "audios_videos"],
 } as const;
 
 type Categoria = keyof typeof CATEGORIAS;
@@ -71,13 +71,11 @@ export default function MinhaLoja() {
   );
 
   // 🔥 sempre que trocar loja → busca produtos
-  useFocusEffect(
-    useCallback(() => {
-      if (lojaSelecionada) {
-        buscarProdutos(lojaSelecionada);
-      }
-    }, [lojaSelecionada])
-  );
+ useEffect(() => {
+  if (lojaSelecionada) {
+    buscarProdutos(lojaSelecionada);
+  }
+}, [lojaSelecionada]);
 
   async function carregarDados() {
     try {
@@ -103,6 +101,7 @@ export default function MinhaLoja() {
       if (lojasData.length > 0) {
         const primeiraLoja = lojasData[0].id;
         setLojaSelecionada(primeiraLoja);
+        buscarProdutos(primeiraLoja); // 🔥 AQUI resolve seu bug
       }
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
@@ -203,19 +202,21 @@ export default function MinhaLoja() {
   // 🔥 FILTRO CORRIGIDO
   const produtosFiltrados = produtos.filter((p) => {
     const categoriaProduto = (p.categoria || "").toLowerCase().trim();
+    const catSelecionada = categoriaSelecionada.toLowerCase().trim();
 
     // Se a categoria selecionada for "todas", mostramos tudo
     if (categoriaSelecionada === "todas") return true;
 
     // Verifica se a categoria do produto bate com a selecionada
-    const catMatch = categoriaProduto === categoriaSelecionada;
+    const catMatch = categoriaProduto === catSelecionada;
 
     // Se não houver subcategoria selecionada, basta bater a categoria
     if (!subcategoriaSelecionada) return catMatch;
 
     // Se houver subcategoria, ambas precisam bater
     const subcategoriaProduto = (p.subcategoria || "").toLowerCase().trim();
-    const subMatch = subcategoriaProduto === subcategoriaSelecionada;
+    const subSelecionada = subcategoriaSelecionada.toLowerCase().trim();
+    const subMatch = subcategoriaProduto === subSelecionada;
 
     return catMatch && subMatch;
   });
@@ -258,6 +259,7 @@ export default function MinhaLoja() {
                 <Text style={styles.produtoQtd}>{loja.descricao}</Text>
               </View>
             </TouchableOpacity>
+            
           ))}
 
           <View style={{ marginTop: 10 }}>

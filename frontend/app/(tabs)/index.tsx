@@ -6,7 +6,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   FlatList,
-  Image,
   ScrollView,
   Platform,
   ActivityIndicator,
@@ -14,6 +13,7 @@ import {
 import { Link, useRouter, useFocusEffect } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Image } from "expo-image";
 
 type UsuarioData = {
   token: string;
@@ -42,46 +42,83 @@ const CATEGORIAS = {
   lanches: [
     {
       nome: "doces",
-      imagem: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?q=80&w=150",
+      imagem: "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=80&q=30",
     },
     {
       nome: "salgados",
-      imagem: "https://images.unsplash.com/photo-1563379926898-05f4575a45d8?q=80&w=150",
+      imagem: "https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=80&q=30",
     },
     {
       nome: "bebidas",
-      imagem: "https://images.unsplash.com/photo-1544145945-f90425340c7e?q=80&w=150",
-    },
+      imagem: "https://images.unsplash.com/photo-1544145945-f90425340c7e?w=80&q=30",
+    }
   ],
-  roupas: [
+
+  vestimentas: [
     {
-      nome: "camisa",
-      imagem: "https://images.unsplash.com/photo-1521334884684-d80222895322?q=80&w=150",
+      nome: "roupas",
+      imagem: "https://images.unsplash.com/photo-1521334884684-d80222895322?w=80&q=30",
     },
     {
-      nome: "calção",
-      imagem: "https://images.unsplash.com/photo-1593032465175-481ac7f401a0?q=80&w=150",
+      nome: "calcados",
+      imagem: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=80&q=30",
     },
     {
-      nome: "cueca",
-      imagem: "https://images.unsplash.com/photo-1618354691373-d851c5c3a990?q=80&w=150",
-    },
-    {
-      nome: "calcinha",
-      imagem: "https://images.unsplash.com/photo-1581044777550-4cfa60707c03?q=80&w=150",
-    },
+      nome: "acessorios",
+      imagem: "https://images.unsplash.com/photo-1526178613658-3f1622045557?w=80&q=30",
+    }
   ],
-} as const;
+
+  casa: [
+    {
+      nome: "moveis",
+      imagem: "https://images.unsplash.com/photo-1582582494700-0b2c0b1b3f0f?w=80&q=30",
+    },
+    {
+      nome: "decoracoes",
+      imagem: "https://images.unsplash.com/photo-1618220179428-22790b461013?w=80&q=30",
+    },
+    {
+      nome: "utensilios",
+      imagem: "https://images.unsplash.com/photo-1503602642458-232111445657?w=80&q=30",
+    }
+  ],
+
+  eletronicos: [
+    {
+      nome: "celulares",
+      imagem: "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=80&q=30",
+    },
+    {
+      nome: "informatica",
+      imagem: "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=80&q=30",
+    },
+    {
+      nome: "video_games",
+      imagem: "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=80&q=30",
+    },
+    {
+      nome: "audios_videos",
+      imagem: "https://images.unsplash.com/photo-1585386959984-a4155223162d?w=80&q=30",
+    }
+  ]
+}  as const;
 
 type Categoria = keyof typeof CATEGORIAS;
 type SubcategoriaNome =
   | "doces"
   | "salgados"
   | "bebidas"
-  | "camisa"
-  | "calção"
-  | "cueca"
-  | "calcinha";
+  | "roupas"
+  | "calcados"
+  | "acessorios"
+  | "moveis"
+  | "decoracoes"
+  | "utensilios"
+  | "celulares"
+  | "informatica"
+  | "video_games"
+  | "audios_videos";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -91,21 +128,26 @@ export default function Dashboard() {
   const [busca, setBusca] = useState("");
   const [categoriaSelecionada, setCategoriaSelecionada] = useState<Categoria | "Todos">("Todos");
   const [subcategoriaSelecionada, setSubcategoriaSelecionada] = useState<SubcategoriaNome | "">("");
+  const imagensCategorias: Record<Categoria, string> = {
+  lanches: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=80&q=30",
+  vestimentas: "https://images.unsplash.com/photo-1521334884684-d80222895322?w=80&q=30",
+  eletronicos: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=80&q=30",
+  casa: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=80&q=30",
+};
 
-  const categorias = Object.keys(CATEGORIAS).map((cat, index) => ({
+  const categorias = (Object.keys(CATEGORIAS) as Categoria[]).map((cat, index) => {
+  return {
     id: String(index),
     nome: cat,
-    imagem:
-      cat === "lanches"
-        ? "https://images.unsplash.com/photo-1551024709-8f23befc6f87?q=80&w=150"
-        : "https://images.unsplash.com/photo-1521334884684-d80222895322?q=80&w=150",
-  }));
+    imagem: imagensCategorias[cat] || "https://via.placeholder.com/80",
+  };
+});
 
   useFocusEffect(
     useCallback(() => {
       verificarLogin();
     }, []),
-  );
+  );  
 
   async function buscarVitrine(termo = "", cat = "Todos", sub = "") {
     try {
@@ -141,6 +183,15 @@ export default function Dashboard() {
     }
   }
 
+  function otimizarImagem(url?: string, largura = 80) {
+    if (!url) return `https://via.placeholder.com/${largura}?q=30`;
+
+    // Remove parâmetros antigos
+    const baseUrl = url.split("?")[0];
+
+    return `${baseUrl}?w=${largura}&q=25&auto=format&fit=crop`;
+  }
+
   // Efeito para busca com debounce
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
@@ -165,204 +216,192 @@ export default function Dashboard() {
   }
 
   return (
-    <View style={styles.container}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 50 }}
-      >
+  <View style={styles.container}>
+    <FlatList
+      data={produtos}
+      keyExtractor={(item) => item.id || item._id!}
+      contentContainerStyle={{ paddingBottom: 40 }}
+      showsVerticalScrollIndicator={false}
+
+      initialNumToRender={4}
+      maxToRenderPerBatch={4}
+      windowSize={3}
+      removeClippedSubviews={true}
+
+      getItemLayout={(_, index) => ({
+        length: 120,
+        offset: 120 * index,
+        index,
+      })}
+
+      // 🔥 HEADER
+      ListHeaderComponent={
         <View style={styles.webWrapper}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Text style={styles.grandeTitulo}>Prajá</Text>
-            <View style={styles.headerRight}>
-              {usuario ? (
-                <View style={styles.usuarioLogado}>
-                  <View>
-                    <Text style={styles.saudacao}>
-                      Olá, {usuario.email?.split("@")[0]}
-                    </Text>
-                    <Text style={styles.tipoUsuario}>{usuario.tipo}</Text>
+          <>
+            {/* Header */}
+            <View style={styles.header}>
+              <Text style={styles.grandeTitulo}>Prajá</Text>
+
+              <View style={styles.headerRight}>
+                {usuario ? (
+                  <View style={styles.usuarioLogado}>
+                    <View>
+                      <Text style={styles.saudacao}>
+                        Olá, {usuario.email?.split("@")[0]}
+                      </Text>
+                      <Text style={styles.tipoUsuario}>{usuario.tipo}</Text>
+                    </View>
+
+                    <TouchableOpacity
+                      onPress={fazerLogout}
+                      style={styles.logoutBtn}
+                    >
+                      <Feather name="log-out" size={20} color="#fff" />
+                    </TouchableOpacity>
                   </View>
-                  <TouchableOpacity
-                    onPress={fazerLogout}
-                    style={styles.logoutBtn}
-                  >
-                    <Feather name="log-out" size={20} color="#fff" />
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                <Link href="/Login" asChild>
-                  <TouchableOpacity style={styles.loginBtn}>
-                    <Text style={styles.linkTexto}>Entrar</Text>
-                    <Feather name="user" size={24} color="#f6f8faff" />
-                  </TouchableOpacity>
-                </Link>
-              )}
+                ) : (
+                  <Link href="/Login" asChild>
+                    <TouchableOpacity style={styles.loginBtn}>
+                      <Text style={styles.linkTexto}>Entrar</Text>
+                      <Feather name="user" size={24} color="#fff" />
+                    </TouchableOpacity>
+                  </Link>
+                )}
+              </View>
             </View>
-          </View>
 
-          <Text style={styles.subtituloHeader}>
-            O que você quer comprar hoje?
-          </Text>
+            <Text style={styles.subtituloHeader}>
+              O que você quer comprar hoje?
+            </Text>
 
-          {/* Busca */}
-          <View style={styles.inputContainer}>
-            <Feather
-              style={styles.icon}
-              name="search"
-              size={20}
-              color="#f6f8faff"
-            />
-            <TextInput
-              placeholder="Buscar comida, mercado..."
-              placeholderTextColor="#eee"
-              style={styles.input}
-              value={busca}
-              onChangeText={setBusca}
-            />
-          </View>
+            {/* Busca */}
+            <View style={styles.inputContainer}>
+              <Feather name="search" size={20} color="#fff" />
+              <TextInput
+                placeholder="Buscar..."
+                placeholderTextColor="#eee"
+                style={styles.input}
+                value={busca}
+                onChangeText={setBusca}
+              />
+            </View>
 
-          {/* Categorias */}
-          <Text style={styles.tituloSecao}>Categorias</Text>
-          <View style={styles.categoriesWrapper}>
-            <FlatList
-              data={categorias}
+            {/* Categorias */}
+            <Text style={styles.tituloSecao}>Categorias</Text>
+
+            <ScrollView
               horizontal
-              showsHorizontalScrollIndicator={Platform.OS === "web"}
+              showsHorizontalScrollIndicator={false}
               contentContainerStyle={{ paddingHorizontal: 20 }}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
+            >
+              {categorias.map((item) => (
                 <TouchableOpacity
+                  key={item.id}
                   style={[
                     styles.card,
                     categoriaSelecionada === item.nome && { opacity: 0.7 },
                   ]}
                   onPress={() => {
-                    const novaCategoria =
-                      categoriaSelecionada === item.nome ? "Todos" : (item.nome as Categoria);
+                    const nova =
+                      categoriaSelecionada === item.nome
+                        ? "Todos"
+                        : (item.nome as Categoria);
 
-                    setCategoriaSelecionada(novaCategoria);
-                    setSubcategoriaSelecionada(""); // limpa subcategoria
+                    setCategoriaSelecionada(nova);
+                    setSubcategoriaSelecionada("");
                   }}
                 >
-                  <Image
-                    source={{ uri: item.imagem }}
-                    style={[
-                      styles.img,
-                      categoriaSelecionada === item.nome && {
-                        borderColor: "#fff",
-                        borderWidth: 3,
-                      },
-                    ]}
-                  />
-                  <Text
-                    style={[
-                      styles.nomeCategoria,
-                      categoriaSelecionada === item.nome && {
-                        fontWeight: "800",
-                      },
-                    ]}
-                  >
-                    {item.nome}
-                  </Text>
+                  <Image source={{ uri: item.imagem }} style={styles.img} />
+                  <Text style={styles.nomeCategoria}>{item.nome}</Text>
                 </TouchableOpacity>
-              )}
-            />
-          </View>
+              ))}
+            </ScrollView>
 
-          {categoriaSelecionada !== "Todos" && (
-            <>
-              <Text style={styles.tituloSecao}>Subcategorias</Text>
+            {/* Subcategorias */}
+            {categoriaSelecionada !== "Todos" && (
+              <>
+                <Text style={styles.tituloSecao}>Subcategorias</Text>
 
-              <ScrollView horizontal contentContainerStyle={{ paddingHorizontal: 20 }}>
-                {CATEGORIAS[categoriaSelecionada as keyof typeof CATEGORIAS].map(
-                  (sub) => (
-                  <TouchableOpacity
-                    key={sub.nome}
-                    style={[
-                      styles.card,
-                      subcategoriaSelecionada === sub.nome && { opacity: 0.7 },
-                    ]}
-                    onPress={() =>
-                      setSubcategoriaSelecionada(
-                        subcategoriaSelecionada === sub.nome ? "" : sub.nome
-                      )
-                    }
-                  >
-
-                    <Image
-                      source={{ uri: sub.imagem }}
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ paddingHorizontal: 20 }}
+                >
+                  {CATEGORIAS[categoriaSelecionada].map((sub) => (
+                    <TouchableOpacity
+                      key={sub.nome}
                       style={[
-                        styles.img,
+                        styles.card,
                         subcategoriaSelecionada === sub.nome && {
-                          borderColor: "#fff",
-                          borderWidth: 3,
+                          opacity: 0.7,
                         },
                       ]}
-                    />
-                    
-
-                    <Text style={styles.nomeCategoria}>{sub.nome}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </>
-          )}
-
-          {/* Lista de Produtos */}
-          <Text style={styles.tituloSecao}>Destaques da Região</Text>
-          <View style={styles.listaProdutos}>
-            {loading ? (
-              <ActivityIndicator color="#fff" size="large" />
-            ) : produtos.length === 0 ? (
-              <Text
-                style={{ color: "#fff", textAlign: "center", marginTop: 20 }}
-              >
-                Nenhum produto disponível.
-              </Text>
-            ) : (
-              produtos.map((item: Produto) => (
-                <TouchableOpacity
-                  key={item.id || item._id}
-                  style={styles.produtoCard}
-                >
-                  <Image
-                    source={{
-                      uri: item.imagem || "https://via.placeholder.com/150",
-                    }}
-                    style={styles.produtoImg}
-                  />
-                  <View style={styles.produtoInfo}>
-                    <Text style={styles.produtoNome} numberOfLines={1}>
-                      {item.nome}
-                    </Text>
-                    <View style={styles.lojaTag}>
-                      <Feather name="shopping-bag" size={12} color="#666" />
-                      <Text style={styles.lojaNome}>
-                        {item.vendedor?.nome || "Loja Parceira"}
-                      </Text>
-                    </View>
-                    <Text style={styles.produtoDesc} numberOfLines={2}>
-                      {item.descricao || "Sem descrição."}
-                    </Text>
-                    <Text style={styles.produtoPreco}>
-                      R$ {item.preco?.toFixed(2).replace(".", ",")}
-                    </Text>
-                  </View>
-                  <View style={styles.btnAdd}>
-                    <Feather name="plus" size={18} color="#ee3f0aff" />
-                  </View>
-                </TouchableOpacity>
-              ))
+                      onPress={() =>
+                        setSubcategoriaSelecionada(
+                          subcategoriaSelecionada === sub.nome ? "" : sub.nome
+                        )
+                      }
+                    >
+                      <Image source={{ uri: sub.imagem }} style={styles.img} />
+                      <Text style={styles.nomeCategoria}>{sub.nome}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </>
             )}
-          </View>
+
+            <Text style={styles.tituloSecao}>Destaques</Text>
+          </>
         </View>
-      </ScrollView>
-    </View>
-  );
+      }
+
+      // 🔥 PRODUTOS
+      renderItem={({ item }) => (
+        <View style={styles.webWrapper}>
+          <TouchableOpacity style={styles.produtoCard}>
+            <Image
+              source={{
+                uri: item.imagem || "https://via.placeholder.com/100",
+              }}
+              style={styles.produtoImg}
+            />
+
+            <View style={styles.produtoInfo}>
+              <Text style={styles.produtoNome}>{item.nome}</Text>
+
+              <Text style={styles.produtoDesc}>
+                {item.descricao || "Sem descrição"}
+              </Text>
+
+              <Text style={styles.produtoPreco}>
+                R$ {item.preco.toFixed(2).replace(".", ",")}
+              </Text>
+            </View>
+
+            {/* BOTÃO + */}
+            <View style={styles.btnAdd}>
+              <Feather name="plus" size={18} color="#ee3f0aff" />
+            </View>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      ListEmptyComponent={
+        !loading ? (
+          <Text style={{ textAlign: "center", marginTop: 20, color: "#fff" }}>
+            Nenhum produto encontrado
+          </Text>
+        ) : null
+      }
+
+      ListFooterComponent={
+        loading ? <ActivityIndicator style={{ margin: 20 }} /> : null
+      }
+    />
+  </View>
+);
 }
 
-// Os estilos (StyleSheet) permanecem os mesmos que você já tem
 const styles = StyleSheet.create({
   container: {
     flex: 1,

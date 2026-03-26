@@ -3,6 +3,16 @@
 
   const prisma = new PrismaClient();
 
+  // 🔥 Função para remover acentos e caracteres especiais
+  const normalizarTexto = (texto) => {
+    if (!texto) return "";
+    return texto
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+  };
+
   // 1. CRIAR PRODUTO
   export async function criarProduto(req, res) {
     try {
@@ -21,12 +31,14 @@
         lojaId,
       } = req.body;
 
-      const categoriaFormatada = categoria?.toLowerCase().trim();
-      const subcategoriaFormatada = subcategoria?.toLowerCase().trim();
+      const categoriaFormatada = normalizarTexto(categoria);
+      const subcategoriaFormatada = normalizarTexto(subcategoria);
 
       const categoriasValidas = {
         lanches: ["doces", "salgados", "bebidas"],
-        roupas: ["camisa", "calção", "cueca", "calcinha"],
+        vestimentas: ["roupas", "calcados", "acessorios"],
+        casa: ["moveis", "decoracoes", "utensilios"],
+        eletronicos: ["celulares", "informatica", "video_games", "audios_videos"],
       };
 
       if (!categoriaFormatada || !categoriasValidas[categoriaFormatada]) {
@@ -35,12 +47,15 @@
         });
       }
 
+      // 🔥 Validação Inteligente: Normaliza as subcategorias válidas antes de comparar
+      const subcategoriasValidasNormalizadas = categoriasValidas[categoriaFormatada].map(s => normalizarTexto(s));
+
       if (
         !subcategoriaFormatada ||
-        !categoriasValidas[categoriaFormatada].includes(subcategoriaFormatada)
+        !subcategoriasValidasNormalizadas.includes(subcategoriaFormatada)
       ) {
         return res.status(400).json({
-          message: "Subcategoria inválida para essa categoria",
+          message: `Subcategoria inválida para essa categoria. Esperado um de: ${categoriasValidas[categoriaFormatada].join(", ")}`,
         });
       }
       // ✅ Validação básica
@@ -86,16 +101,16 @@
         });
       }
 
-      // ✅ Criação do produto
+      // ✅ Criação do produto (com dados normalizados)
       const produto = await prisma.produto.create({
         data: {
           nome,
           descricao,
-          preco: precoConvertido, // 🔥 usando valor validado
+          preco: precoConvertido,
           quantidade: qtd,
           imagem,
-          categoria: categoriaFormatada,
-          subcategoria: subcategoriaFormatada, // 🔥 NOVO
+          categoria: categoriaFormatada, // 🔥 Salva normalizado
+          subcategoria: subcategoriaFormatada, // 🔥 Salva normalizado
           lojaId,
           emEstoque: qtd > 0,
         },
@@ -181,14 +196,34 @@
         subcategoria,
       } = req.body;
 
+      const categoriaFormatada = normalizarTexto(categoria);
+      const subcategoriaFormatada = normalizarTexto(subcategoria);
+
+      const categoriasValidas = {
+        lanches: ["doces", "salgados", "bebidas"],
+        vestimentas: ["roupas", "calcados", "acessorios"],
+        casa: ["moveis", "decoracoes", "utensilios"],
+        eletronicos: ["celulares", "informatica", "video_games", "audios_videos"],
+      };
+
+      if (categoriaFormatada && !categoriasValidas[categoriaFormatada]) {
+        return res.status(400).json({ message: "Categoria inválida" });
+      }
+
+      // 🔥 Validação Inteligente na Atualização
+      const subcategoriasValidasNormalizadas = categoriasValidas[categoriaFormatada]?.map(s => normalizarTexto(s)) || [];
+
+      if (
+        subcategoriaFormatada &&
+        !subcategoriasValidasNormalizadas.includes(subcategoriaFormatada)
+      ) {
+        return res.status(400).json({ message: "Subcategoria inválida" });
+      }
       const dadosAtualizacao = {};
 
-      if (subcategoria !== undefined) {
-        dadosAtualizacao.subcategoria =
-          subcategoria && subcategoria.trim() !== ""
-            ? subcategoria.toLowerCase().trim()
-            : null;
-      }
+        if (subcategoria !== undefined) {
+          dadosAtualizacao.subcategoria = subcategoriaFormatada || null;
+        }
 
 
       const produtoExistente = await prisma.produto.findUnique({
@@ -278,21 +313,20 @@
     try {
       const { id } = req.params;
 
-      const categoriasValidas = ["lanches", "roupas"];
-
+      // 🔥 REMOVIDO: O filtro restritivo de categorias que impedia produtos de aparecerem
+      // Agora buscamos todos os produtos que pertencem a esta lojaId
       const produtos = await prisma.produto.findMany({
         where: {
-          lojaId: id, // ✅ CORRETO
-
-          categoria: {
-            in: categoriasValidas,
-          },
+          lojaId: id,
+        },
+        orderBy: {
+          createdAt: "desc", // Opcional: mostra os mais novos primeiro
         },
       });
 
       return res.status(200).json(produtos);
     } catch (error) {
-      console.error(error);
+      console.error("Erro ao buscar produtos da loja:", error);
       return res.status(500).json({
         message: "Erro ao buscar produtos da loja",
       });

@@ -19,7 +19,9 @@ import { API_URL } from "../services/useActions";
 // 🔥 CATEGORIAS TIPADAS
 const CATEGORIAS = {
   lanches: ["doces", "salgados", "bebidas"],
-  roupas: ["camisa", "calção", "cueca", "calcinha"],
+  vestimentas: ["roupas", "calcados", "acessorios"],
+  casa: ["moveis", "decoracoes", "utensilios"],
+  eletronicos: ["celulares", "informatica", "video_games", "audios_videos"],
 } as const;
 
 type CategoriaTipo = keyof typeof CATEGORIAS;
@@ -41,6 +43,7 @@ export default function AdicionarProduto() {
   const [categoria, setCategoria] = useState<CategoriaTipo | "">("");
   const [subcategoria, setSubcategoria] = useState("");
   const [imagem, setImagem] = useState("");
+  
 
   function limparCampos() {
     setNomeProduto("");
@@ -51,6 +54,14 @@ export default function AdicionarProduto() {
     setSubcategoria("");
     setImagem("");
   }
+  const normalizarTexto = (texto: string): string => {
+  if (!texto) return "";
+  return texto
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+};
 
   async function handleCadastro() {
     if (!nomeProduto || !preco || !quantidade) {
@@ -79,6 +90,10 @@ export default function AdicionarProduto() {
 
     try {
       const token = await AsyncStorage.getItem("token");
+      console.log("ENVIANDO:", {
+  categoria: normalizarTexto(categoria),
+  subcategoria: normalizarTexto(subcategoria),
+});
 
       const response = await fetch(
         `${API_URL}/produtos`,
@@ -93,8 +108,8 @@ export default function AdicionarProduto() {
             preco: precoNumber,
             quantidade: qtdNumber,
             descricao,
-            categoria,
-            subcategoria,
+            categoria: normalizarTexto(categoria),
+            subcategoria: normalizarTexto(subcategoria),
             imagem,
             lojaId: lojaIdFinal,
           }),
