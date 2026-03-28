@@ -103,7 +103,7 @@ export const selecionarMetodoPagamento = async (req, res) => {
         },
       });
 
-      // transação entrega
+      // transacao entrega
       if (valorTaxaEntrega > 0) {
         await tx.transacao.create({
           data: {
@@ -114,6 +114,16 @@ export const selecionarMetodoPagamento = async (req, res) => {
           },
         });
       }
+
+      // Criar chat automaticamente quando o pagamento eh confirmado
+      await tx.chat.create({
+        data: {
+          pedidoId,
+          clienteId: pedido.clienteId,
+          lojaId: pedido.lojaId,
+          ativo: true,
+        },
+      });
     });
 
     return res.status(201).json({
@@ -190,6 +200,12 @@ export const confirmarEntregaComCodigo = async (req, res) => {
           status: "liberado",
           liberadoEm: new Date(),
         },
+      });
+
+      // Desativar chat quando a entrega é confirmada
+      await tx.chat.updateMany({
+        where: { pedidoId },
+        data: { ativo: false },
       });
     });
 

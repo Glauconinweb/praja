@@ -287,7 +287,7 @@ export default function PedidosScreen() {
               <Text style={styles.btnText}>Confirmar Entrega</Text>
             </TouchableOpacity>
           )}
-          {item.status !== "entregue" && item.status !== "cancelado" && (
+          {item.status !== "entregue" && item.status !== "cancelado" && item.statusPagamento && item.statusPagamento !== "pendente" && (
             <TouchableOpacity style={styles.chatBtn} onPress={() => abrirChat(item)}>
               <Feather name="message-circle" size={15} color="#fff" />
               <Text style={styles.btnText}>Chat</Text>

@@ -217,7 +217,7 @@ model Chat {
   clienteId   String     @db.ObjectId
   cliente     User       @relation("ChatCliente", fields: [clienteId], references: [id])
   lojaId String @db.ObjectId
-  loja   User   @relation("ChatLoja", fields: [lojaId], references: [id])
+  loja   Loja   @relation(fields: [lojaId], references: [id])
   ativo       Boolean    @default(true)
   mensagens   Mensagem[]
   createdAt   DateTime   @default(now())
